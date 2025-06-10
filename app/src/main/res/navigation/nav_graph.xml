@@ -3,26 +3,40 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/FirstFragment">
+    app:startDestination="@id/homeFragment">
 
+    <!-- Home Page Fragment -->
     <fragment
-        android:id="@+id/FirstFragment"
-        android:name="com.mealmatch.FirstFragment"
-        android:label="@string/first_fragment_label"
-        tools:layout="@layout/fragment_first">
+        android:id="@+id/homeFragment"
+        android:name="com.mealmatch.HomeFragment"
+        android:label="@string/home_page_label"
+        tools:layout="@layout/fragment_home" />
 
-        <action
-            android:id="@+id/action_FirstFragment_to_SecondFragment"
-            app:destination="@id/SecondFragment" />
-    </fragment>
+    <!-- Match Page Fragment -->
     <fragment
-        android:id="@+id/SecondFragment"
-        android:name="com.mealmatch.SecondFragment"
-        android:label="@string/second_fragment_label"
-        tools:layout="@layout/fragment_second">
+        android:id="@+id/matchFragment"
+        android:name="com.mealmatch.MatchFragment"
+        android:label="@string/match_page_label"
+        tools:layout="@layout/fragment_match" />
 
-        <action
-            android:id="@+id/action_SecondFragment_to_FirstFragment"
-            app:destination="@id/FirstFragment" />
-    </fragment>
+    <!-- Friends Page Fragment -->
+    <fragment
+        android:id="@+id/friendsFragment"
+        android:name="com.mealmatch.FriendsFragment"
+        android:label="@string/friends_page_label"
+        tools:layout="@layout/fragment_friends" />
+
+    <!-- Map Page Fragment -->
+    <fragment
+        android:id="@+id/mapFragment"
+        android:name="com.mealmatch.MapFragment"
+        android:label="@string/map_page_label"
+        tools:layout="@layout/fragment_map" />
+
+    <!-- Profile Page Fragment -->
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="com.mealmatch.ProfileFragment"
+        android:label="@string/profile_page_label"
+        tools:layout="@layout/fragment_profile" />
 </navigation>
