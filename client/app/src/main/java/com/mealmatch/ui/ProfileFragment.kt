@@ -34,6 +34,13 @@ class ProfileFragment : Fragment() {
     ): View? {
         _binding = FragmentProfileBinding.inflate(inflater, container, false)
         return binding.root
+
+
+        binding.editPreferences.setOnClickListener {}
+        binding.btnLeaderboard.setOnClickListener {handleViewLeaderBoards()}
+        binding.btnSettings.setOnClickListener {handleSettings()}
+        binding.btnLogout.setOnClickListener {handleLogout()}
+
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -70,8 +77,14 @@ class ProfileFragment : Fragment() {
     }
 
     private fun handleViewLeaderBoards(){
+        //navigate to leaderboards fragment
+    }
+
+    private fun handleSettings(){
+        //navigate to settings fragment
     }
 
     private fun handleLogout(){
+        // logout of app
     }
 }
