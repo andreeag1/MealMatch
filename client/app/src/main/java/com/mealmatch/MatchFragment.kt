@@ -151,21 +151,16 @@ class MatchFragment : Fragment() {
                     true
                 }
                 MotionEvent.ACTION_MOVE -> {
-                    v.animate()
-                        .x(event.rawX + dX)
-                        .setDuration(0)
-                        .start()
+                    v.x = event.rawX + dX
                     true
                 }
                 MotionEvent.ACTION_UP -> {
                     val deltaX = v.x - v.width / 2
                     if (abs(deltaX) > 300) {
-                        // Swiped away
                         binding.cardContainer.removeView(v)
                         currIndex++
                         showNextCard()
                     } else {
-                        // Snap back to center
                         v.animate()
                             .x(0f)
                             .y(0f)
