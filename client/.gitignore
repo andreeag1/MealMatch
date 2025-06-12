@@ -13,3 +13,5 @@
 .externalNativeBuild
 .cxx
 local.properties
+# ignore our shared debug keystore
+/app/debug.keystore

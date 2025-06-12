@@ -7,6 +7,16 @@ android {
     namespace = "com.mealmatch"
     compileSdk = 35
 
+    signingConfigs {
+        create("sharedDebug") {
+            // relative to the app/ folder
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "AndroidDebugKey"
+            keyPassword = "android"
+        }
+    }
+
     defaultConfig {
         applicationId = "com.mealmatch"
         minSdk = 21
@@ -18,6 +28,10 @@ android {
     }
 
     buildTypes {
+        debug {
+            // ➋ Use our shared keystore for debug
+            signingConfig = signingConfigs.getByName("sharedDebug")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -49,4 +63,5 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    implementation("com.google.android.gms:play-services-maps:18.1.0")
 }
