@@ -9,6 +9,7 @@ import androidx.fragment.app.Fragment
 import com.mealmatch.databinding.FragmentProfileBinding
 import java.util.Optional
 import androidx.appcompat.app.AlertDialog
+import android.util.Log
 
 data class UserPreferences(
     var username: String,
@@ -26,7 +27,6 @@ class ProfileFragment : Fragment() {
         email = "testemail@gmail.com"
     )
 
-
     private var _binding: FragmentProfileBinding? = null
 
     private val binding get() = _binding!!
@@ -36,13 +36,16 @@ class ProfileFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         _binding = FragmentProfileBinding.inflate(inflater, container, false)
-        return binding.root
-
 
         binding.editPreferences.setOnClickListener {}
         binding.btnLeaderboard.setOnClickListener { handleViewLeaderBoards() }
         binding.btnSettings.setOnClickListener { handleSettings() }
         binding.btnLogout.setOnClickListener { handleLogout() }
+
+        binding.editPreferences.setOnClickListener { showEditPreferencesPopup() }
+
+        return binding.root
+
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -73,10 +76,10 @@ class ProfileFragment : Fragment() {
         userSettings.budget = budgetPreferences
 
         // Updates ui to show new preferences
-        binding.prefCuisines.text = "Cuisine Preferences: ${userSettings.cuisines}"
-        binding.prefDietary.text = "Cuisine Preferences: ${userSettings.dietary}"
-        binding.prefAmbiance.text = "Cuisine Preferences: ${userSettings.ambiance}"
-        binding.prefDietary.text = "Cuisine Preferences: ${userSettings.budget}"
+        binding.prefCuisines.text = "Cuisine: ${userSettings.cuisines}"
+        binding.prefDietary.text = "Dietary: ${userSettings.dietary}"
+        binding.prefAmbiance.text = "Ambiance: ${userSettings.ambiance}"
+        binding.prefBudget.text = "Budget: ${userSettings.budget}"
     }
 
     private fun handleViewLeaderBoards() {
@@ -92,6 +95,7 @@ class ProfileFragment : Fragment() {
     }
 
     private fun showEditPreferencesPopup() {
+        Log.i("ProfileFragment", "showEditPreferencesPopup")
         val dialogView = LayoutInflater.from(requireContext())
             .inflate(R.layout.edit_preferences_popup, null)
 
