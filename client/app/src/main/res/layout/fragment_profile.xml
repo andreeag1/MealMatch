@@ -122,6 +122,8 @@
     </LinearLayout>
 
     <!-- Buttons -->
+
+
     <Button
         android:id="@+id/btnLeaderboard"
         android:layout_width="match_parent"
@@ -129,11 +131,9 @@
         android:backgroundTint="#FFA000"
         android:text="🏆 View Leaderboards"
         android:textColor="#FFFFFF"
+        tools:ignore="MissingConstraints"
         tools:layout_editor_absoluteX="0dp"
-        tools:layout_editor_absoluteY="475dp"
-        tools:ignore="MissingConstraints" />
-
-
+        tools:layout_editor_absoluteY="680dp" />
 
     <Button
         android:id="@+id/btnSettings"
@@ -142,9 +142,9 @@
         android:backgroundTint="#9E9E9E"
         android:text="⚙️ App Settings"
         android:textColor="#FFFFFF"
-        tools:layout_editor_absoluteX="0dp"
-        tools:layout_editor_absoluteY="547dp"
-        tools:ignore="MissingConstraints" />
+        tools:ignore="MissingConstraints"
+        tools:layout_editor_absoluteX="32dp"
+        tools:layout_editor_absoluteY="584dp" />
 
     <Button
         android:id="@+id/btnLogout"
@@ -153,8 +153,8 @@
         android:backgroundTint="#F44336"
         android:text="🚪 Logout"
         android:textColor="#FFFFFF"
+        tools:ignore="MissingConstraints"
         tools:layout_editor_absoluteX="0dp"
-        tools:layout_editor_absoluteY="609dp"
-        tools:ignore="MissingConstraints" />
+        tools:layout_editor_absoluteY="632dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
