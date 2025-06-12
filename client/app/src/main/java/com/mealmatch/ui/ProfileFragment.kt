@@ -4,9 +4,11 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import androidx.fragment.app.Fragment
 import com.mealmatch.databinding.FragmentProfileBinding
 import java.util.Optional
+import androidx.appcompat.app.AlertDialog
 
 data class UserPreferences(
     var username: String,
@@ -21,7 +23,8 @@ data class UserPreferences(
 class ProfileFragment : Fragment() {
     val userSettings = UserPreferences(
         username = "testUsername",
-        email = "testemail@gmail.com")
+        email = "testemail@gmail.com"
+    )
 
 
     private var _binding: FragmentProfileBinding? = null
@@ -37,10 +40,9 @@ class ProfileFragment : Fragment() {
 
 
         binding.editPreferences.setOnClickListener {}
-        binding.btnLeaderboard.setOnClickListener {handleViewLeaderBoards()}
-        binding.btnSettings.setOnClickListener {handleSettings()}
-        binding.btnLogout.setOnClickListener {handleLogout()}
-
+        binding.btnLeaderboard.setOnClickListener { handleViewLeaderBoards() }
+        binding.btnSettings.setOnClickListener { handleSettings() }
+        binding.btnLogout.setOnClickListener { handleLogout() }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -52,17 +54,18 @@ class ProfileFragment : Fragment() {
         super.onDestroyView()
         _binding = null
     }
-    private fun setProfileInfo(){
+
+    private fun setProfileInfo() {
         binding.userName.text = "${userSettings.username}"
         binding.userEmail.text = "${userSettings.email}"
     }
 
     private fun handleEditPreferences(
-        cuisinePreferences : String,
-        dietaryPreferences : String,
-        ambiancePreferences : String,
-        budgetPreferences : String,
-    ){
+        cuisinePreferences: String,
+        dietaryPreferences: String,
+        ambiancePreferences: String,
+        budgetPreferences: String,
+    ) {
         // Updates user settings data class
         userSettings.cuisines = cuisinePreferences
         userSettings.dietary = dietaryPreferences
@@ -76,15 +79,40 @@ class ProfileFragment : Fragment() {
         binding.prefDietary.text = "Cuisine Preferences: ${userSettings.budget}"
     }
 
-    private fun handleViewLeaderBoards(){
+    private fun handleViewLeaderBoards() {
         //navigate to leaderboards fragment
     }
 
-    private fun handleSettings(){
+    private fun handleSettings() {
         //navigate to settings fragment
     }
 
-    private fun handleLogout(){
+    private fun handleLogout() {
         // logout of app
+    }
+
+    private fun showEditPreferencesPopup() {
+        val dialogView = LayoutInflater.from(requireContext())
+            .inflate(R.layout.edit_preferences_popup, null)
+
+        val inputCuisine = dialogView.findViewById<EditText>(R.id.inputCuisine)
+        val inputDietary = dialogView.findViewById<EditText>(R.id.inputDietary)
+        val inputAmbiance = dialogView.findViewById<EditText>(R.id.inputAmbiance)
+        val inputBudget = dialogView.findViewById<EditText>(R.id.inputBudget)
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Edit Preferences")
+            .setView(dialogView)
+            .setPositiveButton("Save") { dialog, _ ->
+                val cuisine = inputCuisine.text.toString()
+                val dietary = inputDietary.text.toString()
+                val ambiance = inputAmbiance.text.toString()
+                val budget = inputBudget.text.toString()
+                handleEditPreferences(cuisine, dietary, ambiance, budget)
+                dialog.dismiss()
+            }
+            .setNegativeButton("Cancel") { dialog, _ -> dialog.dismiss() }
+            .show()
+
     }
 }

@@ -30,7 +30,7 @@
             android:id="@+id/avatarCircle"
             android:layout_width="80dp"
             android:layout_height="80dp"
-            android:background="@drawable/userProfilePicPlaceholder"
+            android:background="@drawable/userprofilepicplaceholder"
             android:text=""
             android:gravity="center"
             android:textSize="24sp"
