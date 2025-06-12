@@ -11,13 +11,49 @@
         android:id="@+id/homeTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Home Feed Content Goes Here"
-        android:textSize="24sp"
-        android:textColor="@android:color/black"
+        android:paddingTop="30dp"
+        android:paddingBottom="8dp"
+        android:text="@string/home_page_label"
+        android:textColor="@android:color/holo_orange_dark"
+        android:textSize="32sp"
         android:textStyle="bold"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/imageView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_chainStyle="packed" />
+
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="54dp"
+        android:layout_height="48dp"
+        android:layout_marginTop="25dp"
+        android:contentDescription="@string/home_page_label"
+        android:src="@drawable/home"
+        app:layout_constraintEnd_toStartOf="@+id/homeTextView"
+        app:layout_constraintHorizontal_chainStyle="packed"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:tint="@android:color/holo_orange_dark" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/homeRecyclerView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:clipToPadding="false"
+        android:contentDescription="@string/home_page_description"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/homeTextView"
+        tools:listitem="@layout/feed_item_template" />
+
+    <androidx.constraintlayout.widget.Group
+        android:id="@+id/group5"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:constraint_referenced_ids="imageView,homeTextView" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
