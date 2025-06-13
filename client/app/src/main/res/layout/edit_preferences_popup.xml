@@ -27,10 +27,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
-        <EditText
+        <!-- Budget Preference Dropdown Menu -->
+        <Spinner
             android:id="@+id/inputBudget"
-            android:hint="Budget Preferences"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:spinnerMode="dropdown" />
     </LinearLayout>
 </ScrollView>
