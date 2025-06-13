@@ -10,6 +10,8 @@ import com.mealmatch.databinding.FragmentProfileBinding
 import java.util.Optional
 import androidx.appcompat.app.AlertDialog
 import android.util.Log
+import android.widget.Spinner
+import android.widget.ArrayAdapter
 
 data class UserPreferences(
     var username: String,
@@ -37,7 +39,6 @@ class ProfileFragment : Fragment() {
     ): View? {
         _binding = FragmentProfileBinding.inflate(inflater, container, false)
 
-        binding.editPreferences.setOnClickListener {}
         binding.btnLeaderboard.setOnClickListener { handleViewLeaderBoards() }
         binding.btnSettings.setOnClickListener { handleSettings() }
         binding.btnLogout.setOnClickListener { handleLogout() }
@@ -98,11 +99,17 @@ class ProfileFragment : Fragment() {
         Log.i("ProfileFragment", "showEditPreferencesPopup")
         val dialogView = LayoutInflater.from(requireContext())
             .inflate(R.layout.edit_preferences_popup, null)
+        val spinner = dialogView.findViewById<Spinner>(R.id.inputBudget)
 
         val inputCuisine = dialogView.findViewById<EditText>(R.id.inputCuisine)
         val inputDietary = dialogView.findViewById<EditText>(R.id.inputDietary)
         val inputAmbiance = dialogView.findViewById<EditText>(R.id.inputAmbiance)
-        val inputBudget = dialogView.findViewById<EditText>(R.id.inputBudget)
+        val inputBudgetOptions = arrayOf("Select a budget", "$$", "$$$", "$$$$")
+        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, inputBudgetOptions)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinner.adapter = adapter
+        spinner.setSelection(0)
+
 
         AlertDialog.Builder(requireContext())
             .setTitle("Edit Preferences")
@@ -111,12 +118,11 @@ class ProfileFragment : Fragment() {
                 val cuisine = inputCuisine.text.toString()
                 val dietary = inputDietary.text.toString()
                 val ambiance = inputAmbiance.text.toString()
-                val budget = inputBudget.text.toString()
+                val budget = spinner.selectedItem.toString()
                 handleEditPreferences(cuisine, dietary, ambiance, budget)
                 dialog.dismiss()
             }
             .setNegativeButton("Cancel") { dialog, _ -> dialog.dismiss() }
             .show()
-
     }
 }
