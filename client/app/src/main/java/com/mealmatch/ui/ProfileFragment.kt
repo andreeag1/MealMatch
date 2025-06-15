@@ -1,5 +1,6 @@
 package com.mealmatch.ui
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -93,6 +94,9 @@ class ProfileFragment : Fragment() {
 
     private fun handleLogout() {
         // logout of app
+        val intent = Intent(requireContext(), SignInActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK // Clears back stack
+        startActivity(intent)
     }
 
     private fun showEditPreferencesPopup() {
