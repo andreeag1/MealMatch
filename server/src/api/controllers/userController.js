@@ -10,9 +10,8 @@ const getAllUsers = async (req, res) => {
     const users = await User.find({});
     return response(res, "List of Users", 200, true, { users });
   } catch (error) {
-    console.log(error);
     return response(res, "Internal server error", 500, false, {
-      error: err.message,
+      error: error.message,
     });
   }
 };
@@ -30,9 +29,8 @@ const getUserById = async (req, res) => {
       return response(res, "User not Found", 404, false);
     }
   } catch (error) {
-    console.log(error);
     return response(res, "Internal server error", 500, false, {
-      error: err.message,
+      error: error.message,
     });
   }
 };
@@ -57,9 +55,8 @@ const createUser = async (req, res) => {
 
     return response(res, "New User Created", 201, true, { userResponse });
   } catch (error) {
-    console.log(error);
     return response(res, "Internal server error", 500, false, {
-      error: err.message,
+      error: error.message,
     });
   }
 };
@@ -80,9 +77,8 @@ const updateUser = async (req, res) => {
       return response(res, "User not Found", 404, false);
     }
   } catch (error) {
-    console.log(error);
     return response(res, "Internal server error", 500, false, {
-      error: err.message,
+      error: error.message,
     });
   }
 };
@@ -100,9 +96,8 @@ const deleteUser = async (req, res) => {
       return response(res, "User not Found", 404, false);
     }
   } catch (error) {
-    console.log(error);
     return response(res, "Internal server error", 500, false, {
-      error: err.message,
+      error: error.message,
     });
   }
 };
