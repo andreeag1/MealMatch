@@ -3,6 +3,7 @@ package com.mealmatch
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
+import android.widget.Toast
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.mealmatch.databinding.FragmentFriendsBinding
@@ -23,7 +24,20 @@ class FriendsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding.friendsTextView.text = "Welcome to the Friends Page!"
+
+//        binding.createGroupButton.setOnClickListener {
+//            val groupName = binding.groupNameEditText.text.toString().trim()
+//            if (groupName.isNotEmpty()) {
+//                callCreateGroupApi(groupName)
+//            } else {
+//                Toast.makeText(requireContext(), "Please enter a group name", Toast.LENGTH_SHORT).show()
+//            }
+//        }
     }
+
+//    private fun callCreateGroupApi(groupName: String) {
+//
+//    }
 
     override fun onDestroyView() {
         super.onDestroyView()
