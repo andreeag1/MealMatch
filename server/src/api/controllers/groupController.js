@@ -1,13 +1,13 @@
-const Group = require("../models/groupModel");
-const Message = require("../models/messageModel");
-const User = require("../models/userModel");
-const response = require("../helpers/response");
+import Group from "../models/groupModel.js";
+import Message from "../models/messageModel.js";
+import User from "../models/userModel.js";
+import response from "../helpers/response.js";
 
 /**
  * @desc Create a Group
  * @route POST /api/groups
  */
-const createGroup = async (req, res) => {
+export const createGroup = async (req, res) => {
   try {
     const { name, members: membersUsernames } = req.body;
     const creatorId = req.user._id;
@@ -33,7 +33,7 @@ const createGroup = async (req, res) => {
  * @desc Get messages for a specific gorup
  * @route GET /api/groups/:id
  */
-const getGroupMessages = async (req, res) => {
+export const getGroupMessages = async (req, res) => {
   try {
     const messages = await Message.find({ group: req.params.roomId })
       .populate("user", "username")
@@ -44,9 +44,4 @@ const getGroupMessages = async (req, res) => {
       error: error.message,
     });
   }
-};
-
-module.exports = {
-  createGroup,
-  getGroupMessages,
 };
