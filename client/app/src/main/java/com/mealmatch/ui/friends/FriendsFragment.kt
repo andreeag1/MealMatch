@@ -1,10 +1,11 @@
-package com.mealmatch
+package com.mealmatch.ui.friends
 
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import com.mealmatch.databinding.FragmentFriendsBinding
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -14,6 +15,7 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.view.isVisible
+import com.mealmatch.R
 
 data class Friend(val id: String, val name: String, val avatarUrl: String)
 data class GroupChat(val id: String, val name: String, val members: List<Friend>)
@@ -21,18 +23,16 @@ data class GroupChat(val id: String, val name: String, val members: List<Friend>
 
 class FriendsFragment : Fragment() {
     private var _binding: FragmentFriendsBinding? = null
-
     private val binding get() = _binding!!
+
+    private val viewModel: FriendsViewModel by viewModels()
 
     private val initialFriends = listOf(
         Friend("1", "Bob", "https://placehold.co/80x80/FFD700/FFFFFF?text=AP"),
         Friend("2", "Rob", "https://placehold.co/80x80/ADD8E6/000080?text=JL"),
         Friend("3", "Dude", "https://placehold.co/80x80/90EE90/006400?text=CK")
     )
-    private val initialGroupChats = mutableListOf(
-        GroupChat("gc1", "Weekend Foodies 🍜", listOf(initialFriends[0], initialFriends[1])),
-        GroupChat("gc2", "Brunch Bunch 🥞", listOf(initialFriends[1], initialFriends[2]))
-    )
+    private val initialGroupChats = mutableListOf<GroupChat>()
 
     // Adapters for the RecyclerViews
     private lateinit var selectableFriendsAdapter: SelectableFriendsAdapter
@@ -77,9 +77,9 @@ class FriendsFragment : Fragment() {
 
     private fun setupClickListeners(view: View) {
         val groupNameEditText = view.findViewById<TextInputEditText>(R.id.editTextGroupName)
+        val createGroupButton = view.findViewById<Button>(R.id.buttonCreateGroup)
 
-        // Create Group button
-        view.findViewById<Button>(R.id.buttonCreateGroup).setOnClickListener {
+        createGroupButton.setOnClickListener {
             val groupName = groupNameEditText.text.toString().trim()
             val selectedFriends = selectableFriendsAdapter.getSelectedFriends()
 
@@ -92,13 +92,11 @@ class FriendsFragment : Fragment() {
                 return@setOnClickListener
             }
 
-            // Create the new group and update the list
-            val newGroup = GroupChat(
-                id = "gc${System.currentTimeMillis()}",
-                name = groupName,
-                members = selectedFriends
-            )
-            initialGroupChats.add(newGroup)
+            val memberUsernames = selectedFriends.map { it.name }
+            val authToken = "Bearer YOUR_JWT_TOKEN_HERE"
+
+            // Tell the ViewModel to create the group
+            viewModel.createGroup(authToken, groupName, memberUsernames)
             groupChatsAdapter.notifyItemInserted(initialGroupChats.size - 1)
 
             groupNameEditText.text = null
