@@ -1,9 +1,15 @@
-const User = require("../models/userModel");
-const response = require("../helpers/response");
-const jwt = require("jsonwebtoken");
-const { jwtSecret, jwtExpiresIn } = require("../../config/index");
+import User from "../models/userModel.js";
+import response from "../helpers/response.js";
+import jwt from "jsonwebtoken";
+import config from "../../config/index.js";
 
-const login = async (req, res) => {
+const { jwtSecret, jwtExpiresIn } = config;
+
+/**
+ * @desc Create a new user
+ * @route POST /api/users
+ */
+export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
@@ -28,4 +34,24 @@ const login = async (req, res) => {
   }
 };
 
-module.exports = login;
+/**
+ * @desc Create a new user
+ * @route POST /api/users
+ */
+export const register = async (req, res) => {
+  try {
+    const { username, email, password } = req.body;
+    const newUser = new User({ username, email, password });
+    const savedUser = await newUser.save();
+
+    const token = jwt.sign({ id: savedUser._id }, jwtSecret, {
+      expiresIn: jwtExpiresIn,
+    });
+
+    return response(res, "New User Created", 201, true, { token });
+  } catch (error) {
+    return response(res, "Internal server error", 500, false, {
+      error: error.message,
+    });
+  }
+};

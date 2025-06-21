@@ -1,11 +1,11 @@
-const response = require("../helpers/response");
-const User = require("../models/userModel");
+import response from "../helpers/response.js";
+import User from "../models/userModel.js";
 
 /**
  * @desc Get all users
  * @route GET /api/users
  */
-const getAllUsers = async (req, res) => {
+export const getAllUsers = async (req, res) => {
   try {
     const users = await User.find({});
     return response(res, "List of Users", 200, true, { users });
@@ -20,7 +20,7 @@ const getAllUsers = async (req, res) => {
  * @desc Get a single user by ID
  * @route GET /api/users/:id
  */
-const getUserById = async (req, res) => {
+export const getUserById = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (user) {
@@ -36,36 +36,10 @@ const getUserById = async (req, res) => {
 };
 
 /**
- * @desc Create a new user
- * @route POST /api/users
- */
-const createUser = async (req, res) => {
-  try {
-    const { username, email, password } = req.body;
-    const newUser = new User({ username, email, password });
-    const savedUser = await newUser.save();
-
-    const userResponse = {
-      _id: savedUser._id,
-      username: savedUser.username,
-      email: savedUser.email,
-      createdAt: savedUser.createdAt,
-      updatedAt: savedUser.updatedAt,
-    };
-
-    return response(res, "New User Created", 201, true, { userResponse });
-  } catch (error) {
-    return response(res, "Internal server error", 500, false, {
-      error: error.message,
-    });
-  }
-};
-
-/**
  * @desc Update a user by ID
  * @route PUT /api/users/:id
  */
-const updateUser = async (req, res) => {
+export const updateUser = async (req, res) => {
   try {
     const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -87,7 +61,7 @@ const updateUser = async (req, res) => {
  * @desc Delete a user by ID
  * @route DELETE /api/users/:id
  */
-const deleteUser = async (req, res) => {
+export const deleteUser = async (req, res) => {
   try {
     const deletedUser = await User.findByIdAndDelete(req.params.id);
     if (deletedUser) {
@@ -100,12 +74,4 @@ const deleteUser = async (req, res) => {
       error: error.message,
     });
   }
-};
-
-module.exports = {
-  getAllUsers,
-  getUserById,
-  createUser,
-  updateUser,
-  deleteUser,
 };

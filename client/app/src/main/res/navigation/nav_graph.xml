@@ -8,35 +8,35 @@
     <!-- Home Page Fragment -->
     <fragment
         android:id="@+id/homeFragment"
-        android:name="com.mealmatch.HomeFragment"
+        android:name="com.mealmatch.ui.HomeFragment"
         android:label="@string/home_page_label"
         tools:layout="@layout/fragment_home" />
 
     <!-- Match Page Fragment -->
     <fragment
         android:id="@+id/matchFragment"
-        android:name="com.mealmatch.MatchFragment"
+        android:name="com.mealmatch.ui.MatchFragment"
         android:label="@string/match_page_label"
         tools:layout="@layout/fragment_match" />
 
     <!-- Friends Page Fragment -->
     <fragment
         android:id="@+id/friendsFragment"
-        android:name="com.mealmatch.FriendsFragment"
+        android:name="com.mealmatch.ui.friends.FriendsFragment"
         android:label="@string/friends_page_label"
         tools:layout="@layout/fragment_friends" />
 
     <!-- Map Page Fragment -->
     <fragment
         android:id="@+id/mapFragment"
-        android:name="com.mealmatch.MapFragment"
+        android:name="com.mealmatch.ui.MapFragment"
         android:label="@string/map_page_label"
         tools:layout="@layout/fragment_map" />
 
     <!-- Profile Page Fragment -->
     <fragment
         android:id="@+id/profileFragment"
-        android:name="com.mealmatch.ProfileFragment"
+        android:name="com.mealmatch.ui.ProfileFragment"
         android:label="@string/profile_page_label"
         tools:layout="@layout/fragment_profile" />
 </navigation>
