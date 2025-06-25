@@ -16,6 +16,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.view.isVisible
 import com.mealmatch.R
+import com.mealmatch.data.local.TokenManager
 
 data class Friend(val id: String, val name: String, val avatarUrl: String)
 data class GroupChat(val id: String, val name: String, val members: List<Friend>)
@@ -42,7 +43,7 @@ class FriendsFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         _binding = FragmentFriendsBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -51,6 +52,17 @@ class FriendsFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         setupRecyclerViews(view)
         setupClickListeners(view)
+        observeViewModel()
+        fetchGroups()
+    }
+
+    private fun fetchGroups() {
+        val token = TokenManager.getToken(requireContext())
+        if (token != null) {
+            viewModel.getUserGroups("Bearer $token")
+        } else {
+            Toast.makeText(context, "Not authenticated. Please log in.", Toast.LENGTH_LONG).show()
+        }
     }
 
     private fun setupRecyclerViews(view: View) {
@@ -93,16 +105,53 @@ class FriendsFragment : Fragment() {
             }
 
             val memberUsernames = selectedFriends.map { it.name }
-            val authToken = "Bearer YOUR_JWT_TOKEN_HERE"
+            val token = TokenManager.getToken(requireContext())
 
-            // Tell the ViewModel to create the group
+            if (token == null) {
+                Toast.makeText(context, "Authentication error. Please log in again.", Toast.LENGTH_LONG).show()
+                return@setOnClickListener
+            }
+
+            val authToken = "Bearer $token"
+
             viewModel.createGroup(authToken, groupName, memberUsernames)
-            groupChatsAdapter.notifyItemInserted(initialGroupChats.size - 1)
+        }
+    }
 
-            groupNameEditText.text = null
-            selectableFriendsAdapter.clearSelection()
+    private fun observeViewModel() {
+        // Observer for the create group action
+        viewModel.createGroupResult.observe(viewLifecycleOwner) { result ->
+            when (result) {
+                is ApiResult.Loading -> Toast.makeText(context, "Creating group...", Toast.LENGTH_SHORT).show()
+                is ApiResult.Success -> {
+                    Toast.makeText(context, "Group created successfully!", Toast.LENGTH_LONG).show()
+                    binding.editTextGroupName.text = null
+                    selectableFriendsAdapter.clearSelection()
+                    fetchGroups()
+                }
+                is ApiResult.Error -> Toast.makeText(context, "Error: ${result.message}", Toast.LENGTH_LONG).show()
+            }
+        }
 
-            Toast.makeText(context, "Group '$groupName' created!", Toast.LENGTH_SHORT).show()
+        // Observer for the list of user's groups
+        viewModel.userGroupsResult.observe(viewLifecycleOwner) { result ->
+            when (result) {
+                is ApiResult.Loading -> {
+                    Toast.makeText(context, "Fetching Groups", Toast.LENGTH_SHORT).show()
+                }
+                is ApiResult.Success -> {
+                    // Convert the backend response model to the UI model
+                    val groupChatsForUi = result.data.map { groupResponse ->
+                        val membersForUi = groupResponse.members.map { member ->
+                            Friend(id = member._id, name = member.username, avatarUrl = "")
+                        }
+                        GroupChat(id = groupResponse._id, name = groupResponse.name, members = membersForUi)
+                    }
+                    // Update the adapter with the new list
+                    groupChatsAdapter.updateGroups(groupChatsForUi)
+                }
+                is ApiResult.Error -> Toast.makeText(context, "Error fetching groups: ${result.message}", Toast.LENGTH_LONG).show()
+            }
         }
     }
 
@@ -160,7 +209,13 @@ class SelectableFriendsAdapter(private val friends: List<Friend>) : RecyclerView
     }
 }
 
-class GroupChatsAdapter(private val groupChats: List<GroupChat>, private val onItemClick: (GroupChat) -> Unit) : RecyclerView.Adapter<GroupChatsAdapter.ViewHolder>() {
+class GroupChatsAdapter(private val groupChats: MutableList<GroupChat>, private val onItemClick: (GroupChat) -> Unit) : RecyclerView.Adapter<GroupChatsAdapter.ViewHolder>() {
+
+    fun updateGroups(newGroups: List<GroupChat>) {
+        groupChats.clear()
+        groupChats.addAll(newGroups)
+        notifyDataSetChanged()
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_group_chat, parent, false)

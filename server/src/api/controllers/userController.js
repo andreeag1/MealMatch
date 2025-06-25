@@ -8,7 +8,7 @@ import User from "../models/userModel.js";
 export const getAllUsers = async (req, res) => {
   try {
     const users = await User.find({});
-    return response(res, "List of Users", 200, true, { users });
+    return response(res, "List of Users", 200, true, users);
   } catch (error) {
     return response(res, "Internal server error", 500, false, {
       error: error.message,
@@ -24,7 +24,7 @@ export const getUserById = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (user) {
-      return response(res, "User Found", 200, true, { user });
+      return response(res, "User Found", 200, true, user);
     } else {
       return response(res, "User not Found", 404, false);
     }
@@ -46,7 +46,7 @@ export const updateUser = async (req, res) => {
       runValidators: true,
     });
     if (updatedUser) {
-      return response(res, "User updated", 200, true, { updatedUser });
+      return response(res, "User updated", 200, true, updatedUser);
     } else {
       return response(res, "User not Found", 404, false);
     }

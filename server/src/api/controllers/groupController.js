@@ -38,7 +38,27 @@ export const getGroupMessages = async (req, res) => {
     const messages = await Message.find({ group: req.params.roomId })
       .populate("user", "username")
       .sort({ createdAt: "asc" });
-    return response(res, "List Group Messages", 200, true, { messages });
+    return response(res, "List Group Messages", 200, true, messages);
+  } catch (error) {
+    return response(res, "Internal server error", 500, false, {
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * @desc Get all groups for the authenticated user
+ * @route GET /api/groups
+ */
+export const getUserGroups = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    const groups = await Group.find({ members: userId })
+      .populate("members", "username email")
+      .sort({ updatedAt: -1 }); //show most recently active groups first
+
+    return response(res, "User groups fetched successfully", 200, true, groups);
   } catch (error) {
     return response(res, "Internal server error", 500, false, {
       error: error.message,
