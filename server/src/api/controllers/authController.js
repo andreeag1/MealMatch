@@ -26,7 +26,7 @@ export const login = async (req, res) => {
       expiresIn: jwtExpiresIn,
     });
 
-    return response(res, "Login Successful", 200, true, { token });
+    return response(res, "Login Successful", 200, true, token);
   } catch (error) {
     return response(res, "Internal server error", 500, false, {
       error: err.message,
@@ -48,7 +48,7 @@ export const register = async (req, res) => {
       expiresIn: jwtExpiresIn,
     });
 
-    return response(res, "New User Created", 201, true, { token });
+    return response(res, "New User Created", 201, true, token);
   } catch (error) {
     return response(res, "Internal server error", 500, false, {
       error: error.message,
