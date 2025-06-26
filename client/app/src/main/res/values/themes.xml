@@ -6,4 +6,10 @@
     </style>
 
     <style name="Theme.MealMatch" parent="Base.Theme.MealMatch" />
+
+    <style name="Theme.MealMatch.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
 </resources>

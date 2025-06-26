@@ -35,7 +35,7 @@ export const createGroup = async (req, res) => {
  */
 export const getGroupMessages = async (req, res) => {
   try {
-    const messages = await Message.find({ group: req.params.roomId })
+    const messages = await Message.find({ group: req.params.groupId })
       .populate("user", "username")
       .sort({ createdAt: "asc" });
     return response(res, "List Group Messages", 200, true, messages);

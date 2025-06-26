@@ -1,4 +1,4 @@
-import { WebSocketServer } from "ws";
+import { WebSocketServer, WebSocket } from "ws";
 import jwt from "jsonwebtoken";
 import Message from "../models/messageModel.js";
 import User from "../models/userModel.js";
@@ -59,6 +59,7 @@ function setupWebSocket(server) {
           await newMessage.save();
 
           const messageToSend = {
+            userId: ws.userId.toString(),
             username: ws.username,
             content: content,
             createdAt: newMessage.createdAt,
@@ -67,7 +68,7 @@ function setupWebSocket(server) {
           // Broadcast to all clients in the room
           if (rooms.has(roomId)) {
             rooms.get(roomId).forEach((client) => {
-              if (client.readyState === OPEN) {
+              if (client.readyState === WebSocket.OPEN) {
                 client.send(JSON.stringify(messageToSend));
               }
             });
