@@ -1,10 +1,12 @@
-package com.mealmatch
+package com.mealmatch.ui
 
+import android.net.Uri
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
+import com.mealmatch.R
 import com.mealmatch.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {

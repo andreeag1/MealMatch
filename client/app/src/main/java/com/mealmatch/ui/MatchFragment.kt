@@ -1,4 +1,4 @@
-package com.mealmatch
+package com.mealmatch.ui
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -13,6 +13,7 @@ import android.widget.FrameLayout
 import androidx.fragment.app.Fragment
 import androidx.cardview.widget.CardView
 import androidx.core.view.setPadding
+import com.mealmatch.R
 import com.mealmatch.databinding.FragmentMatchBinding
 import kotlin.math.abs
 

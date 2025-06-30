@@ -1,13 +1,15 @@
-const Ws = require("ws");
-const jwt = require("jsonwebtoken");
-const Message = require("../models/messageModel");
-const { jwtSecret } = require("../../config/index");
-const User = require("../models/userModel");
+import { WebSocketServer, WebSocket } from "ws";
+import jwt from "jsonwebtoken";
+import Message from "../models/messageModel.js";
+import User from "../models/userModel.js";
+import config from "../../config/index.js";
+
+const { jwtSecret } = config;
 
 const rooms = new Map();
 
 function setupWebSocket(server) {
-  const wss = new Ws.Server({ server, path: "/ws" });
+  const wss = new WebSocketServer({ server, path: "/ws" });
 
   wss.on("connection", async (ws, req) => {
     const urlParams = new URLSearchParams(req.url.slice(req.url.indexOf("?")));
@@ -19,9 +21,14 @@ function setupWebSocket(server) {
     }
 
     try {
-      console.log(token, jwtSecret);
       const decoded = jwt.verify(token, jwtSecret);
       const user = await User.findById(decoded.id);
+
+      if (!user) {
+        ws.close(1008, "User not found");
+        return;
+      }
+
       ws.userId = user._id;
       ws.username = user.username;
 
@@ -52,6 +59,7 @@ function setupWebSocket(server) {
           await newMessage.save();
 
           const messageToSend = {
+            userId: ws.userId.toString(),
             username: ws.username,
             content: content,
             createdAt: newMessage.createdAt,
@@ -60,7 +68,7 @@ function setupWebSocket(server) {
           // Broadcast to all clients in the room
           if (rooms.has(roomId)) {
             rooms.get(roomId).forEach((client) => {
-              if (client.readyState === Ws.OPEN) {
+              if (client.readyState === WebSocket.OPEN) {
                 client.send(JSON.stringify(messageToSend));
               }
             });
@@ -82,4 +90,4 @@ function setupWebSocket(server) {
   });
 }
 
-module.exports = setupWebSocket;
+export default setupWebSocket;

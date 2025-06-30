@@ -1,14 +1,14 @@
-package com.mealmatch
+package com.mealmatch.ui
 
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import com.mealmatch.databinding.FragmentMapBinding
+import com.mealmatch.databinding.FragmentProfileBinding
 
-class MapFragment : Fragment() {
-    private var _binding: FragmentMapBinding? = null
+class ProfileFragment : Fragment() {
+    private var _binding: FragmentProfileBinding? = null
 
     private val binding get() = _binding!!
 
@@ -16,13 +16,13 @@ class MapFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        _binding = FragmentMapBinding.inflate(inflater, container, false)
+        _binding = FragmentProfileBinding.inflate(inflater, container, false)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        binding.mapTextView.text = "Welcome to the Map Page!"
+        binding.profileTextView.text = "Welcome to the Profile Page!"
     }
 
     override fun onDestroyView() {
