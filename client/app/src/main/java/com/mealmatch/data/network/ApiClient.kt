@@ -1,6 +1,7 @@
 package com.mealmatch.data.network
 
 
+import com.mealmatch.data.network.repository.ProfilePrefApiService
 import com.mealmatch.data.network.service.AuthApiService
 import com.mealmatch.data.network.service.GroupApiService
 import okhttp3.OkHttpClient
@@ -38,4 +39,10 @@ object ApiClient {
     val authApiService: AuthApiService by lazy {
         retrofit.create(AuthApiService::class.java)
     }
+
+    val profilePrefApiService: ProfilePrefApiService by lazy {
+        retrofit.create(AuthApiService::class.java)
+    }
+
+
 }
