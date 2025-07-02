@@ -1,4 +1,4 @@
-package com.mealmatch
+package com.mealmatch.ui
 
 import android.os.Bundle
 import androidx.fragment.app.Fragment

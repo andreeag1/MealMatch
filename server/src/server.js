@@ -1,19 +1,21 @@
-const express = require("express");
-const http = require("http");
-const cors = require("cors");
-const morgan = require("morgan");
-const apiRoutes = require("./api/routes");
-const connectDB = require("./config/database");
-const setupWebSocket = require("./api/websocket/websocket");
-const { port } = require("./config");
+import config from "./config/index.js";
+const { port } = config;
+
+import express, { json } from "express";
+import { createServer } from "http";
+import cors from "cors";
+import morgan from "morgan";
+import apiRoutes from "./api/routes/index.js";
+import connectDB from "./config/database.js";
+import setupWebSocket from "./api/websocket/websocket.js";
 
 connectDB();
 
 const app = express();
-const server = http.createServer(app);
+const server = createServer(app);
 
 app.use(cors());
-app.use(express.json());
+app.use(json());
 app.use(morgan("dev"));
 
 //API Routes

@@ -1,6 +1,6 @@
-const mongoose = require("mongoose");
+import { Schema, model } from "mongoose";
 
-const groupSchema = new mongoose.Schema(
+const groupSchema = new Schema(
   {
     name: {
       type: String,
@@ -10,7 +10,7 @@ const groupSchema = new mongoose.Schema(
     },
     members: [
       {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: "User",
       },
     ],
@@ -18,5 +18,5 @@ const groupSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const Group = mongoose.model("Group", groupSchema);
-module.exports = Group;
+const Group = model("Group", groupSchema);
+export default Group;

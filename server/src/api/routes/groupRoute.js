@@ -1,14 +1,16 @@
-const express = require("express");
-const router = express.Router();
-const {
+import { Router } from "express";
+const router = Router();
+import {
   createGroup,
   getGroupMessages,
-} = require("../controllers/groupController");
-const authMiddleware = require("../middlewares/authMiddleware");
+  getUserGroups,
+} from "../controllers/groupController.js";
+import authMiddleware from "../middlewares/authMiddleware.js";
 
 router.use(authMiddleware);
 
 router.post("/", createGroup);
-router.get("/:roomId", getGroupMessages);
+router.get("/:groupId", getGroupMessages);
+router.get("/", getUserGroups);
 
-module.exports = router;
+export default router;

@@ -1,9 +1,11 @@
-const jwt = require("jsonwebtoken");
-const User = require("../models/userModel");
-const response = require("../helpers/response");
-const { jwtSecret } = require("../../config/index");
+import jwt from "jsonwebtoken";
+import User from "../models/userModel.js";
+import response from "../helpers/response.js";
+import config from "../../config/index.js";
 
-module.exports = async (req, res, next) => {
+const { jwtSecret } = config;
+
+export default async (req, res, next) => {
   let token;
   if (
     req.headers.authorization &&
@@ -23,11 +25,9 @@ module.exports = async (req, res, next) => {
     // Check if user still exists
     const currentUser = await User.findById(decoded.id);
     if (!currentUser) {
-      return res
-        .status(401)
-        .json({
-          message: "The user belonging to this token no longer exists.",
-        });
+      return res.status(401).json({
+        message: "The user belonging to this token no longer exists.",
+      });
     }
 
     // Attach user to the request object

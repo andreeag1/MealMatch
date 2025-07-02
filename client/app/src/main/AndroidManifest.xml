@@ -1,13 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="com.mealmatch" >
-
+    xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <application
+        android:usesCleartextTraffic="true"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -17,20 +14,30 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MealMatch"
         tools:targetApi="31">
-
-        <meta-data
-            android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyD1t28YvcuGDt9H7hfcUjK92KOF0yDTbII" />
-
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.splash.SplashActivity"
             android:exported="true"
             android:theme="@style/Theme.MealMatch">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https"
+                android:host="www.your-app.com"
+                android:pathPrefix="/auth" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".ui.auth.AuthActivity"
+            android:label="Authentication" />
+        <activity
+            android:name=".ui.MainActivity" />
+        <activity
+            android:name=".ui.chat.ChatActivity"
+            android:theme="@style/Theme.MealMatch.NoActionBar" />
     </application>
 
 </manifest>

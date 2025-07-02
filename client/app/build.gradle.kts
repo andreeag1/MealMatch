@@ -7,16 +7,6 @@ android {
     namespace = "com.mealmatch"
     compileSdk = 35
 
-    signingConfigs {
-        create("sharedDebug") {
-            // relative to the app/ folder
-            storeFile = file("debug.keystore")
-            storePassword = "android"
-            keyAlias = "AndroidDebugKey"
-            keyPassword = "android"
-        }
-    }
-
     defaultConfig {
         applicationId = "com.mealmatch"
         minSdk = 21
@@ -28,10 +18,6 @@ android {
     }
 
     buildTypes {
-        debug {
-            // ➋ Use our shared keystore for debug
-            signingConfig = signingConfigs.getByName("sharedDebug")
-        }
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -60,8 +46,13 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
+    implementation("com.auth0.android:jwtdecode:2.0.2")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    implementation("com.google.android.gms:play-services-maps:18.1.0")
+
 }

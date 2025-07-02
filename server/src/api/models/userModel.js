@@ -1,7 +1,7 @@
-const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
+import { Schema, model } from "mongoose";
+import { genSalt, hash, compare } from "bcryptjs";
 
-const userSchema = new mongoose.Schema({
+const userSchema = new Schema({
   username: {
     type: String,
     required: [true, "Name is required"],
@@ -33,15 +33,15 @@ userSchema.pre("save", async function (next) {
   }
 
   // Generate a salt and hash the password
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
+  const salt = await genSalt(10);
+  this.password = await hash(this.password, salt);
   next();
 });
 
 userSchema.methods.matchPassword = async function (enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
+  return await compare(enteredPassword, this.password);
 };
 
-const User = mongoose.model("User", userSchema);
+const User = model("User", userSchema);
 
-module.exports = User;
+export default User;
