@@ -195,21 +195,21 @@ class ProfileFragment : Fragment() {
             userPreferenceMessage = preferences
         )
 
-        val repo = UserRepository()
-
-        // Send in coroutine scope
-        lifecycleScope.launch {
-            try {
-                val response = repo.submitUserProfile(userProfile)
-                if (response.isSuccessful) {
-                    Log.i("ProfileFragment", "Profile successfully saved to backend")
-                } else {
-                    Log.e("ProfileFragment", "Failed to save profile: ${response.code()}")
-                }
-            } catch (e: Exception) {
-                Log.e("ProfileFragment", "Network error: ${e.message}")
-            }
-        }
+//        val repo = UserRepository()
+//
+//        // Send in coroutine scope
+//        lifecycleScope.launch {
+//            try {
+//                val response = repo.submitUserProfile(userProfile)
+//                if (response.isSuccessful) {
+//                    Log.i("ProfileFragment", "Profile successfully saved to backend")
+//                } else {
+//                    Log.e("ProfileFragment", "Failed to save profile: ${response.code()}")
+//                }
+//            } catch (e: Exception) {
+//                Log.e("ProfileFragment", "Network error: ${e.message}")
+//            }
+//        }
     }
 
 
