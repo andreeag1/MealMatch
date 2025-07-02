@@ -41,8 +41,7 @@ object ApiClient {
     }
 
     val profilePrefApiService: ProfilePrefApiService by lazy {
-        retrofit.create(AuthApiService::class.java)
+        retrofit.create(ProfilePrefApiService::class.java)
     }
-
 
 }
