@@ -20,10 +20,43 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         // Find the NavHostFragment by its ID from activity_main.xml
-        val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        val navHostFragment = supportFragmentManager
+            .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         navController = navHostFragment.navController
 
         // Set up the BottomNavigationView with the NavController
         binding.bottomNavigationView.setupWithNavController(navController)
+
+
+        binding.bottomNavigationView.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.matchFragment -> {
+                    navController.navigate(R.id.mapFragment)
+                    true
+                }
+                R.id.friendsFragment -> {
+                    navController.navigate(R.id.mapFragment)
+                    true
+                }
+                R.id.homeFragment -> {
+                    navController.navigate(R.id.profileFragment)
+                    true
+                }
+                R.id.mapFragment -> {
+                    navController.navigate(R.id.profileFragment)
+                    true
+                }
+                R.id.profileFragment -> {
+                    navController.navigate(R.id.profileFragment)
+                    true
+                }
+                else -> false
+            }
+        }
+
+        // Set up the BottomNavigationView with the NavController
+        binding.bottomNavigationView.setupWithNavController(navController)
     }
+
+
 }

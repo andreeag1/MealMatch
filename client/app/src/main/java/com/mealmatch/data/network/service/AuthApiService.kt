@@ -6,10 +6,11 @@ import com.mealmatch.data.model.AuthResponse
 import com.mealmatch.data.model.RegisterRequest
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.POST
 
 interface AuthApiService {
-    @POST("api/auth/login")
+    @GET("api/auth/login")
     suspend fun login(@Body request: LoginRequest): Response<ApiResponse<AuthResponse>>
 
     @POST("api/auth/register")
