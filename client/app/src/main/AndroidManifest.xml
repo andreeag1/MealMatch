@@ -43,6 +43,9 @@
         <activity
             android:name=".ui.chat.ChatActivity"
             android:theme="@style/Theme.MealMatch.NoActionBar" />
+        <activity
+            android:name=".ui.match.MatchActivity"
+            android:label="Match Session" />
     </application>
 
 </manifest>
