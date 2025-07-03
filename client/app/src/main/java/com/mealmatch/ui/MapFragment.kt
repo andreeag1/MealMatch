@@ -17,6 +17,9 @@ import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.mealmatch.R
 import com.mealmatch.databinding.FragmentMapBinding
+import com.mealmatch.ui.map.RestaurantAdapter
+import com.mealmatch.data.model.Restaurant
+
 
 class MapFragment : Fragment(), OnMapReadyCallback {
 
