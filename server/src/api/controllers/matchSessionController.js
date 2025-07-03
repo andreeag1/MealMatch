@@ -110,3 +110,28 @@ export const submitSwipes = async (req, res) => {
     });
   }
 };
+
+/**
+ * @desc Create a new solo match session
+ * @route POST /api/sessions/solo
+ */
+export const createSoloMatchSession = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const restaurants = await getRestaurantsForSession();
+
+    const newSession = new MatchSession({
+      restaurants: restaurants,
+      participants: [],
+    });
+    await newSession.save();
+
+    return response(res, "New solo session started successfully", 201, true, {
+      session: newSession,
+    });
+  } catch (error) {
+    return response(res, "Internal server error", 500, false, {
+      error: error.message,
+    });
+  }
+};

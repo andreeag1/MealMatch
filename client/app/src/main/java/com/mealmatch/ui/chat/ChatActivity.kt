@@ -12,6 +12,7 @@ import com.mealmatch.data.local.TokenManager
 import com.mealmatch.data.model.MessageResponse
 import com.mealmatch.data.model.UserInfo
 import com.mealmatch.databinding.ActivityChatBinding
+import com.mealmatch.ui.MatchActivity
 import com.mealmatch.ui.friends.ApiResult
 
 class ChatActivity : AppCompatActivity() {
@@ -56,7 +57,7 @@ class ChatActivity : AppCompatActivity() {
 
         setupToolbar(groupName)
         setupRecyclerView()
-        setupSendButton()
+        setupClickListeners()
         observeViewModel()
 
         viewModel.fetchMessages("Bearer $token", groupId!!)
@@ -135,18 +136,12 @@ class ChatActivity : AppCompatActivity() {
                 is ApiResult.Success -> {
                     val session = result.data
                     Toast.makeText(this, "New session started!", Toast.LENGTH_LONG).show()
-                    
-                    // Navigate to the MatchFragment and pass ONLY the session ID
-                    val matchFragment = MatchFragment().apply {
-                        arguments = Bundle().apply {
-                            putString("SESSION_ID", session._id)
-                        }
+
+                    val intent = Intent(this, MatchActivity::class.java).apply {
+                        putExtra("SESSION_ID", session._id)
+                        putExtra("GROUP_ID", session.group)
                     }
-                    
-                    supportFragmentManager.beginTransaction()
-                        .replace(R.id.fragment_container, matchFragment) // Assumes you have a container with this ID
-                        .addToBackStack(null)
-                        .commit()
+                    startActivity(intent)
                 }
                 is ApiResult.Error -> {
                     Toast.makeText(this, "Error: ${result.message}", Toast.LENGTH_LONG).show()

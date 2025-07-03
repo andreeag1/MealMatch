@@ -10,19 +10,23 @@ import android.annotation.SuppressLint
 import android.graphics.Color
 import android.widget.TextView
 import android.widget.FrameLayout
-import androidx.fragment.app.Fragment
+import android.widget.Toast
+import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import androidx.core.view.setPadding
 import com.mealmatch.R
-import com.mealmatch.databinding.FragmentMatchBinding
+import com.mealmatch.data.local.TokenManager
+import com.mealmatch.data.model.Swipe
+import com.mealmatch.databinding.ActivityMatchBinding
+import com.mealmatch.ui.friends.ApiResult
+import com.mealmatch.ui.match.MatchViewModel
 import kotlin.math.abs
 
 data class Restaurant(val id: String, val name: String, val description: String, val imageId: Int)
 
-class MatchFragment : Fragment() {
-    private var _binding: FragmentMatchBinding? = null
-    private val binding get() = _binding!!
-
+class MatchActivity : AppCompatActivity() {
+    private lateinit var binding: ActivityMatchBinding
     private val viewModel: MatchViewModel by viewModels()
 
     private val restaurants = listOf(
@@ -36,21 +40,21 @@ class MatchFragment : Fragment() {
     private var currIndex = 0
     private val userSwipes = mutableListOf<Swipe>()
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        _binding = FragmentMatchBinding.inflate(inflater, container, false)
-        return binding.root
-    }
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        binding = ActivityMatchBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+        sessionId = intent.getStringExtra("SESSION_ID")
+
+        if (sessionId == null) {
+            Toast.makeText(this, "Error: Session ID missing.", Toast.LENGTH_LONG).show()
+            finish()
+            return
+        }
 
         setupButtons()
         observeViewModel()
-
-        sessionId = arguments?.getString("SESSION_ID")
 
         if (sessionId == null) {
             // if no session ID was passed, it's a solo session created from match page
@@ -62,10 +66,10 @@ class MatchFragment : Fragment() {
     }
 
     private fun startNewSoloSession() {
-        val token = TokenManager.getToken(requireContext())
+        val token = TokenManager.getToken(this)
         if (token == null) {
-            Toast.makeText(context, "Authentication Error", Toast.LENGTH_LONG).show()
-            parentFragmentManager.popBackStack()
+            Toast.makeText(this, "Authentication Error", Toast.LENGTH_LONG).show()
+            finish()
             return
         }
         viewModel.startNewSession("Bearer $token", null)
@@ -80,7 +84,7 @@ class MatchFragment : Fragment() {
         if (currIndex >= restaurants.size) return
 
         val restaurant = restaurants[currIndex]
-        userSwipes.add(Swipe(restaurantId = restaurant.id, liked = liked))
+        userSwipes.add(Swipe(restaurantId = restaurant.id, liked = right))
 
         val topId = binding.cardContainer.childCount - 1
         if (topId < 0) {
@@ -109,7 +113,6 @@ class MatchFragment : Fragment() {
 
     private fun showNextCard() {
         if (currIndex >= restaurants.size) {
-            Toast.makeText(context, "Submitting your choices...", Toast.LENGTH_SHORT).show()
             submitAllSwipes()
         }
         val card = createCard(restaurants[currIndex])
@@ -118,52 +121,50 @@ class MatchFragment : Fragment() {
     }
 
      private fun submitAllSwipes() {
-        val token = TokenManager.getToken(requireContext())
+        val token = TokenManager.getToken(this)
         if (token != null && sessionId != null) {
             viewModel.submitSwipes("Bearer $token", sessionId!!, userSwipes)
         } else {
-            Toast.makeText(context, "Authentication Error", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Authentication Error", Toast.LENGTH_LONG).show()
         }
     }
 
     private fun observeViewModel() {
-        viewModel.sessionResult.observe(viewLifecycleOwner) { result ->
+        viewModel.sessionResult.observe(this) { result ->
             when (result) {
                 is ApiResult.Loading -> {
-                    Toast.makeText(context, "Starting session...", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Starting session...", Toast.LENGTH_SHORT).show()
                 }
                 is ApiResult.Success -> {
                     //this is only for solo sessions
                     val session = result.data
                     this.sessionId = session._id
-                    Toast.makeText(context, "Session started!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Session started!", Toast.LENGTH_SHORT).show()
                     showNextCard()
                 }
                 is ApiResult.Error -> {
-                    Toast.makeText(context, "Error starting session: ${result.message}", Toast.LENGTH_LONG).show()
-                    parentFragmentManager.popBackStack()
+                    Toast.makeText(this, "Error starting session: ${result.message}", Toast.LENGTH_LONG).show()
+                    finish()
                 }
             }
         }
 
-        viewModel.submitSwipesResult.observe(viewLifecycleOwner) { result ->
+        viewModel.submitSwipesResult.observe(this) { result ->
             when (result) {
                 is ApiResult.Loading -> {  }
                 is ApiResult.Success -> {
-                    Toast.makeText(context, "Your choices have been submitted!", Toast.LENGTH_LONG).show()
-                    parentFragmentManager.popBackStack()
+                    Toast.makeText(this, "Your choices have been submitted!", Toast.LENGTH_LONG).show()
+                    finish()
                 }
                 is ApiResult.Error -> {
-                    Toast.makeText(context, "Error submitting choices: ${result.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, "Error submitting choices: ${result.message}", Toast.LENGTH_LONG).show()
                 }
             }
         }
     }
 
     private fun createCard(restaurant: Restaurant) : CardView {
-        val context = requireContext()
-
-        val card = CardView(context).apply {
+        val card = CardView(this).apply {
             layoutParams = FrameLayout.LayoutParams(800, 1000).apply {
                 gravity = Gravity.CENTER
             }
@@ -172,7 +173,7 @@ class MatchFragment : Fragment() {
             setCardBackgroundColor(Color.WHITE)
         }
 
-        val container = FrameLayout(context).apply {
+        val container = FrameLayout(this).apply {
             layoutParams = FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT
@@ -180,7 +181,7 @@ class MatchFragment : Fragment() {
             setPadding(32)
         }
 
-        val imageView = android.widget.ImageView(context).apply {
+        val imageView = android.widget.ImageView(this).apply {
             setImageResource(restaurant.imageId)
             layoutParams = FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
@@ -189,14 +190,14 @@ class MatchFragment : Fragment() {
             scaleType = android.widget.ImageView.ScaleType.CENTER_CROP
         }
 
-        val titleView = TextView(context).apply {
+        val titleView = TextView(this).apply {
             text = restaurant.name
             textSize = 22f
             setTextColor(Color.BLACK)
             setPadding(0, 520, 0, 0)
         }
 
-        val descView = TextView(context).apply {
+        val descView = TextView(this).apply {
             text = restaurant.description
             textSize = 16f
             setTextColor(Color.DKGRAY)
@@ -245,10 +246,5 @@ class MatchFragment : Fragment() {
                 else -> false
             }
         }
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
     }
 }

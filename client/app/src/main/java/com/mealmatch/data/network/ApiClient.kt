@@ -4,6 +4,7 @@ package com.mealmatch.data.network
 import com.mealmatch.data.network.repository.ProfilePrefApiService
 import com.mealmatch.data.network.service.AuthApiService
 import com.mealmatch.data.network.service.GroupApiService
+import com.mealmatch.data.network.service.SessionApiService
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -42,6 +43,10 @@ object ApiClient {
 
     val profilePrefApiService: ProfilePrefApiService by lazy {
         retrofit.create(ProfilePrefApiService::class.java)
+    }
+
+    val sessionApiService: SessionApiService by lazy {
+        retrofit.create(SessionApiService::class.java)
     }
 
 }

@@ -25,7 +25,7 @@ class MatchViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val response = if (groupId != null) {
-                    sessionRepository.createGroupSession(token, groupId)
+                    sessionRepository.createMatchSession(token, groupId)
                 } else {
                     sessionRepository.createSoloSession(token)
                 }
