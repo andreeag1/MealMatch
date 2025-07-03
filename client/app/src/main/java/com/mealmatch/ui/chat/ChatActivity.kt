@@ -92,13 +92,25 @@ class ChatActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupSendButton() {
+    private fun setupClickListeners() {
         binding.buttonSend.setOnClickListener {
             val messageContent = binding.editTextMessage.text.toString().trim()
             if (messageContent.isNotEmpty()) {
                 viewModel.sendMessage(groupId!!, messageContent)
                 binding.editTextMessage.text.clear()
             }
+        }
+
+        binding.buttonStartMatch.setOnClickListener {
+            val token = TokenManager.getToken(this)
+            if (token != null && groupId != null) {
+                viewModel.startNewMatchSession("Bearer $token", groupId!!)
+            }
+        }
+
+        binding.buttonLeaderboard.setOnClickListener {
+            // TODO: Handle leaderboard click
+            Toast.makeText(this, "Leaderboard clicked", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -111,6 +123,33 @@ class ChatActivity : AppCompatActivity() {
                 }
                 is ApiResult.Error -> {
                     Toast.makeText(this, "Error fetching messages: ${result.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+
+        viewModel.createSessionResult.observe(this) { result ->
+            when (result) {
+                is ApiResult.Loading -> {
+                    Toast.makeText(this, "Starting new session...", Toast.LENGTH_SHORT).show()
+                }
+                is ApiResult.Success -> {
+                    val session = result.data
+                    Toast.makeText(this, "New session started!", Toast.LENGTH_LONG).show()
+                    
+                    // Navigate to the MatchFragment and pass ONLY the session ID
+                    val matchFragment = MatchFragment().apply {
+                        arguments = Bundle().apply {
+                            putString("SESSION_ID", session._id)
+                        }
+                    }
+                    
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.fragment_container, matchFragment) // Assumes you have a container with this ID
+                        .addToBackStack(null)
+                        .commit()
+                }
+                is ApiResult.Error -> {
+                    Toast.makeText(this, "Error: ${result.message}", Toast.LENGTH_LONG).show()
                 }
             }
         }

@@ -17,20 +17,24 @@ import com.mealmatch.R
 import com.mealmatch.databinding.FragmentMatchBinding
 import kotlin.math.abs
 
-data class Restaurant(val name: String, val description: String, val imageId: Int)
+data class Restaurant(val id: String, val name: String, val description: String, val imageId: Int)
 
 class MatchFragment : Fragment() {
     private var _binding: FragmentMatchBinding? = null
-
     private val binding get() = _binding!!
 
+    private val viewModel: MatchViewModel by viewModels()
+
     private val restaurants = listOf(
-        Restaurant("ABC Sushi", "Premier Sushi and Sashimi.", R.drawable.sushi),
-        Restaurant("DEF Burgers", "Delicious gourmet burgers and hand cut fries!", R.drawable.burgers),
-        Restaurant("GHI Pasta", "Authentic Italian Cuisine.", R.drawable.pasta),
-        Restaurant("JKL Tacos", "Fine Tacos and Burritos made fresh just for you!", R.drawable.tacos)
+        Restaurant("restaurant_id_1", "ABC Sushi", "Premier Sushi and Sashimi.", R.drawable.sushi),
+        Restaurant("restaurant_id_2", "DEF Burgers", "Delicious gourmet burgers and hand cut fries!", R.drawable.burgers),
+        Restaurant("restaurant_id_3", "GHI Pasta", "Authentic Italian Cuisine.", R.drawable.pasta),
+        Restaurant("restaurant_id_4", "JKL Tacos", "Fine Tacos and Burritos made fresh just for you!", R.drawable.tacos)
         )
+    
+    private var sessionId: String? = null
     private var currIndex = 0
+    private val userSwipes = mutableListOf<Swipe>()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -42,18 +46,42 @@ class MatchFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        showNextCard()
 
-        binding.noButton.setOnClickListener {
-            swipeCard(right = false)
-        }
+        setupButtons()
+        observeViewModel()
 
-        binding.yesButton.setOnClickListener {
-            swipeCard(right = true)
+        sessionId = arguments?.getString("SESSION_ID")
+
+        if (sessionId == null) {
+            // if no session ID was passed, it's a solo session created from match page
+            startNewSoloSession()
+        } else {
+            // If a session ID exists, we are in a group session.
+            showNextCard()
         }
     }
 
+    private fun startNewSoloSession() {
+        val token = TokenManager.getToken(requireContext())
+        if (token == null) {
+            Toast.makeText(context, "Authentication Error", Toast.LENGTH_LONG).show()
+            parentFragmentManager.popBackStack()
+            return
+        }
+        viewModel.startNewSession("Bearer $token", null)
+    }
+
+    private fun setupButtons() {
+        binding.noButton.setOnClickListener { swipeCard(right = false) }
+        binding.yesButton.setOnClickListener { swipeCard(right = true) }
+    }
+
     private fun swipeCard(right: Boolean) {
+        if (currIndex >= restaurants.size) return
+
+        val restaurant = restaurants[currIndex]
+        userSwipes.add(Swipe(restaurantId = restaurant.id, liked = liked))
+
         val topId = binding.cardContainer.childCount - 1
         if (topId < 0) {
             return
@@ -81,11 +109,55 @@ class MatchFragment : Fragment() {
 
     private fun showNextCard() {
         if (currIndex >= restaurants.size) {
-            return
+            Toast.makeText(context, "Submitting your choices...", Toast.LENGTH_SHORT).show()
+            submitAllSwipes()
         }
         val card = createCard(restaurants[currIndex])
         setupSwipe(card)
         binding.cardContainer.addView(card)
+    }
+
+     private fun submitAllSwipes() {
+        val token = TokenManager.getToken(requireContext())
+        if (token != null && sessionId != null) {
+            viewModel.submitSwipes("Bearer $token", sessionId!!, userSwipes)
+        } else {
+            Toast.makeText(context, "Authentication Error", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun observeViewModel() {
+        viewModel.sessionResult.observe(viewLifecycleOwner) { result ->
+            when (result) {
+                is ApiResult.Loading -> {
+                    Toast.makeText(context, "Starting session...", Toast.LENGTH_SHORT).show()
+                }
+                is ApiResult.Success -> {
+                    //this is only for solo sessions
+                    val session = result.data
+                    this.sessionId = session._id
+                    Toast.makeText(context, "Session started!", Toast.LENGTH_SHORT).show()
+                    showNextCard()
+                }
+                is ApiResult.Error -> {
+                    Toast.makeText(context, "Error starting session: ${result.message}", Toast.LENGTH_LONG).show()
+                    parentFragmentManager.popBackStack()
+                }
+            }
+        }
+
+        viewModel.submitSwipesResult.observe(viewLifecycleOwner) { result ->
+            when (result) {
+                is ApiResult.Loading -> {  }
+                is ApiResult.Success -> {
+                    Toast.makeText(context, "Your choices have been submitted!", Toast.LENGTH_LONG).show()
+                    parentFragmentManager.popBackStack()
+                }
+                is ApiResult.Error -> {
+                    Toast.makeText(context, "Error submitting choices: ${result.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
     }
 
     private fun createCard(restaurant: Restaurant) : CardView {
