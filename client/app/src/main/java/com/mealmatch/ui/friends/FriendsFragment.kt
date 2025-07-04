@@ -118,7 +118,6 @@ class FriendsFragment : Fragment() {
     }
 
     private fun observeViewModel() {
-        // Observer for the create group action
         viewModel.createGroupResult.observe(viewLifecycleOwner) { result ->
             when (result) {
                 is ApiResult.Loading -> Toast.makeText(context, "Creating group...", Toast.LENGTH_SHORT).show()
@@ -132,21 +131,16 @@ class FriendsFragment : Fragment() {
             }
         }
 
-        // Observer for the list of user's groups
         viewModel.userGroupsResult.observe(viewLifecycleOwner) { result ->
             when (result) {
-                is ApiResult.Loading -> {
-                    Toast.makeText(context, "Creating group...", Toast.LENGTH_SHORT).show()
-                }
+                is ApiResult.Loading -> { }
                 is ApiResult.Success -> {
-                    // Convert the backend response model to the UI model
                     val groupChatsForUi = result.data.map { groupResponse ->
                         val membersForUi = groupResponse.members.map { member ->
                             Friend(id = member._id, name = member.username, avatarUrl = "")
                         }
                         GroupChat(id = groupResponse._id, name = groupResponse.name, members = membersForUi)
                     }
-                    // Update the adapter with the new list
                     groupChatsAdapter.updateGroups(groupChatsForUi)
                 }
                 is ApiResult.Error -> Toast.makeText(context, "Error fetching groups: ${result.message}", Toast.LENGTH_LONG).show()

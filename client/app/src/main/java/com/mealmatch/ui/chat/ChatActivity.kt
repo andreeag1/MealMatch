@@ -12,7 +12,7 @@ import com.mealmatch.data.local.TokenManager
 import com.mealmatch.data.model.MessageResponse
 import com.mealmatch.data.model.UserInfo
 import com.mealmatch.databinding.ActivityChatBinding
-import com.mealmatch.ui.MatchActivity
+import com.mealmatch.ui.match.MatchActivity
 import com.mealmatch.ui.friends.ApiResult
 
 class ChatActivity : AppCompatActivity() {

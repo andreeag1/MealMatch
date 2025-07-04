@@ -11,7 +11,6 @@ const getRestaurantsForSession = async () => {
     "restaurant_id_2",
     "restaurant_id_3",
     "restaurant_id_4",
-    "restaurant_id_5",
   ];
 };
 
@@ -38,9 +37,13 @@ export const createMatchSession = async (req, res) => {
     });
     await newSession.save();
 
-    return response(res, "New match session started successfully", 201, true, {
-      session: newSession,
-    });
+    return response(
+      res,
+      "New match session started successfully",
+      201,
+      true,
+      newSession
+    );
   } catch (error) {
     return response(res, "Internal server error", 500, false, {
       error: error.message,
@@ -89,8 +92,12 @@ export const submitSwipes = async (req, res) => {
     // mark this user as having participated
     session.participants.push(userId);
 
+    const requiredParticipants = session.group
+      ? session.group.members.length
+      : 1;
+
     // check if all group members have participated
-    if (session.participants.length === session.group.members.length) {
+    if (session.participants.length >= requiredParticipants) {
       const matchResult = runMatchingAlgorithm(session.swipes);
       session.result = matchResult;
       session.status = "completed";
@@ -101,9 +108,7 @@ export const submitSwipes = async (req, res) => {
 
     await session.save();
 
-    return response(res, "Swipes submitted successfully", 200, true, {
-      session,
-    });
+    return response(res, "Swipes submitted successfully", 200, true, session);
   } catch (error) {
     return response(res, "Internal server error", 500, false, {
       error: error.message,
@@ -126,9 +131,13 @@ export const createSoloMatchSession = async (req, res) => {
     });
     await newSession.save();
 
-    return response(res, "New solo session started successfully", 201, true, {
-      session: newSession,
-    });
+    return response(
+      res,
+      "New solo session started successfully",
+      201,
+      true,
+      newSession
+    );
   } catch (error) {
     return response(res, "Internal server error", 500, false, {
       error: error.message,

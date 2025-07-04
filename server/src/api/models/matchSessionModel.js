@@ -46,7 +46,6 @@ const matchSessionSchema = new mongoose.Schema(
     ],
     result: {
       restaurantId: String,
-      restaurantName: String,
     },
   },
   {

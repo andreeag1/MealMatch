@@ -1,4 +1,4 @@
-package com.mealmatch.ui
+package com.mealmatch.ui.match
 
 import android.os.Bundle
 import android.view.LayoutInflater
