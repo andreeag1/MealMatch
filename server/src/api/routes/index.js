@@ -4,7 +4,7 @@ const router = Router();
 import userRoutes from "./userRoute.js";
 import groupRoutes from "./groupRoute.js";
 import authRoutes from "./authRoute.js";
-import sessionRoutes from "./matchSessionRoutes.js";
+import sessionRoutes from "./matchSessionRoute.js";
 
 router.use("/users", userRoutes);
 router.use("/groups", groupRoutes);

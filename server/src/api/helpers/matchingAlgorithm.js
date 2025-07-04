@@ -26,8 +26,5 @@ export const runMatchingAlgorithm = (allSwipes) => {
   // for now, just return the most liked restaurant.
   return {
     restaurantId: bestMatchId,
-    restaurantName: bestMatchId
-      ? `Mock Restaurant Name for ${bestMatchId}`
-      : "No Match Found",
   };
 };

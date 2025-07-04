@@ -15,9 +15,9 @@
     <!-- Match Page Fragment -->
     <fragment
         android:id="@+id/matchFragment"
-        android:name="com.mealmatch.ui.MatchFragment"
+        android:name="com.mealmatch.ui.match.SoloMatchFragment"
         android:label="@string/match_page_label"
-        tools:layout="@layout/activity_match" />
+        tools:layout="@layout/fragment_solo_match" />
 
     <!-- Friends Page Fragment -->
     <fragment
