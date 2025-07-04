@@ -6,18 +6,21 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
+import com.mealmatch.data.model.MatchSessionResponse
 import com.mealmatch.data.model.MessageResponse
 import com.mealmatch.data.model.WebSocketIncomingMessage
 import com.mealmatch.data.model.WebSocketJoinMessage
 import com.mealmatch.data.model.WebSocketSendMessage
 import com.mealmatch.data.network.WebSocketClient
 import com.mealmatch.data.network.repository.GroupRepository
+import com.mealmatch.data.network.repository.SessionRepository
 import com.mealmatch.ui.friends.ApiResult
 import kotlinx.coroutines.launch
 
 class ChatViewModel : ViewModel() {
 
     private val groupRepository = GroupRepository()
+    private val sessionRepository = SessionRepository()
     private val webSocketClient = WebSocketClient()
     private val gson = Gson()
 
@@ -26,6 +29,10 @@ class ChatViewModel : ViewModel() {
 
     private val _newMessage = MutableLiveData<WebSocketIncomingMessage>()
     val newMessage: LiveData<WebSocketIncomingMessage> = _newMessage
+
+    private val _createSessionResult = MutableLiveData<ApiResult<MatchSessionResponse>>()
+    val createSessionResult: LiveData<ApiResult<MatchSessionResponse>> = _createSessionResult
+
 
     init {
         webSocketClient.setListener(object : WebSocketClient.AppWebSocketListener() {
@@ -48,6 +55,23 @@ class ChatViewModel : ViewModel() {
                 }
             } catch (e: Exception) {
                 _messages.value = ApiResult.Error(e.message ?: "Network request failed")
+            }
+        }
+    }
+
+    fun startNewMatchSession(token: String, groupId: String) {
+        _createSessionResult.value = ApiResult.Loading
+        viewModelScope.launch {
+            try {
+                val response = sessionRepository.createMatchSession(token, groupId)
+                if (response.isSuccessful && response.body()?.success == true) {
+                    _createSessionResult.value = ApiResult.Success(response.body()!!.data!!)
+                } else {
+                    val errorMsg = response.body()?.message ?: "Failed to start session"
+                    _createSessionResult.value = ApiResult.Error(errorMsg)
+                }
+            } catch (e: Exception) {
+                _createSessionResult.value = ApiResult.Error(e.message ?: "Network request failed")
             }
         }
     }

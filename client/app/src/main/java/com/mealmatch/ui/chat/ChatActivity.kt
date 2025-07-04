@@ -12,6 +12,7 @@ import com.mealmatch.data.local.TokenManager
 import com.mealmatch.data.model.MessageResponse
 import com.mealmatch.data.model.UserInfo
 import com.mealmatch.databinding.ActivityChatBinding
+import com.mealmatch.ui.match.MatchActivity
 import com.mealmatch.ui.friends.ApiResult
 
 class ChatActivity : AppCompatActivity() {
@@ -56,7 +57,7 @@ class ChatActivity : AppCompatActivity() {
 
         setupToolbar(groupName)
         setupRecyclerView()
-        setupSendButton()
+        setupClickListeners()
         observeViewModel()
 
         viewModel.fetchMessages("Bearer $token", groupId!!)
@@ -92,13 +93,25 @@ class ChatActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupSendButton() {
+    private fun setupClickListeners() {
         binding.buttonSend.setOnClickListener {
             val messageContent = binding.editTextMessage.text.toString().trim()
             if (messageContent.isNotEmpty()) {
                 viewModel.sendMessage(groupId!!, messageContent)
                 binding.editTextMessage.text.clear()
             }
+        }
+
+        binding.buttonStartMatch.setOnClickListener {
+            val token = TokenManager.getToken(this)
+            if (token != null && groupId != null) {
+                viewModel.startNewMatchSession("Bearer $token", groupId!!)
+            }
+        }
+
+        binding.buttonLeaderboard.setOnClickListener {
+            // TODO: Handle leaderboard click
+            Toast.makeText(this, "Leaderboard clicked", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -111,6 +124,27 @@ class ChatActivity : AppCompatActivity() {
                 }
                 is ApiResult.Error -> {
                     Toast.makeText(this, "Error fetching messages: ${result.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+
+        viewModel.createSessionResult.observe(this) { result ->
+            when (result) {
+                is ApiResult.Loading -> {
+                    Toast.makeText(this, "Starting new session...", Toast.LENGTH_SHORT).show()
+                }
+                is ApiResult.Success -> {
+                    val session = result.data
+                    Toast.makeText(this, "New session started!", Toast.LENGTH_LONG).show()
+
+                    val intent = Intent(this, MatchActivity::class.java).apply {
+                        putExtra("SESSION_ID", session._id)
+                        putExtra("GROUP_ID", session.group)
+                    }
+                    startActivity(intent)
+                }
+                is ApiResult.Error -> {
+                    Toast.makeText(this, "Error: ${result.message}", Toast.LENGTH_LONG).show()
                 }
             }
         }

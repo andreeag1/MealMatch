@@ -25,8 +25,8 @@ class AuthViewModel : ViewModel() {
                 val response = authRepository.login(LoginRequest(email, password))
                 if (response.isSuccessful) {
                     val apiResponse = response.body()
-                    if (apiResponse != null && apiResponse.success && apiResponse.token != null) {
-                        _authResult.value = ApiResult.Success(AuthResponse(apiResponse.token))
+                    if (apiResponse != null && apiResponse.success && apiResponse.data?.token != null) {
+                        _authResult.value = ApiResult.Success(AuthResponse(apiResponse.data.token))
                     } else {
                         _authResult.value = ApiResult.Error(apiResponse?.message ?: "Login failed")
                     }
