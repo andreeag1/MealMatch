@@ -19,6 +19,7 @@ import com.mealmatch.data.model.UserProfileMessage
 import com.mealmatch.ui.auth.AuthActivity
 import com.mealmatch.data.network.repository.ProfilePrefRepository
 import kotlinx.coroutines.launch
+import com.mealmatch.data.model.UserViewModel
 
 data class UserPreferences(
     var username: String,
@@ -34,8 +35,8 @@ class ProfileFragment : Fragment() {
     private val profilePrefRepository = ProfilePrefRepository()
 
     val userSettings = UserPreferences(
-        username = "testUsername",
-        email = "testemail@gmail.com"
+        username = UserViewModel.username ?: "testUsername",
+        email = UserViewModel.email?: "testemail@gmail.com"
     )
 
     private var _binding: FragmentProfileBinding? = null
@@ -61,8 +62,7 @@ class ProfileFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setProfileInfo()
-        fetchPreferences()
-        
+
         // Prompt if preferences are empty
         if (userSettings.cuisines.isNullOrEmpty() &&
             userSettings.dietary.isNullOrEmpty() &&
@@ -190,7 +190,7 @@ class ProfileFragment : Fragment() {
         )
 
         val userProfile = UserProfileMessage(
-            userId = "some_user_id", // You must replace with the actual user ID (maybe from auth)
+            userId = "some_user_id",
             username = userSettings.username,
             email = userSettings.email,
             userPreferenceMessage = preferences
@@ -206,23 +206,34 @@ class ProfileFragment : Fragment() {
 
     private fun fetchPreferences() {
         lifecycleScope.launch {
-            try{
+            try {
                 val response = profilePrefRepository.getProfilePref("testtoken")
-                if (response.isSuccessful){
-                    if (response.body() != null){
-                        val profileMessage = response.body()!!.data
-                        val prefs = profileMessage?.userPreferenceMessage
-                        handleEditPreferences(
-                            prefs?.cuisine ?: "",
-                            prefs?.dietary ?: "",
-                            prefs?.ambiance ?: "",
-                            prefs?.budget ?: ""
-                        )
+                if (response.isSuccessful) {
+                    val profileMessage = response.body()?.data
+                    val prefs = profileMessage?.userPreferenceMessage
+
+                    handleEditPreferences(
+                        prefs?.cuisine ?: "",
+                        prefs?.dietary ?: "",
+                        prefs?.ambiance ?: "",
+                        prefs?.budget ?: ""
+                    )
+
+                    // Only show the popup if all fields are still empty
+                    if ((prefs?.cuisine.isNullOrEmpty() &&
+                                prefs?.dietary.isNullOrEmpty() &&
+                                prefs?.ambiance.isNullOrEmpty() &&
+                                prefs?.budget.isNullOrEmpty())) {
+                        showInitialPreferencesDialog()
                     }
+
+                } else {
+                    Log.e("ProfileFragment", "Profile fetch unsuccessful")
                 }
-            }catch (e: Exception){
-                Log.e("ProfileFragment", "Failed to fetch profile")
+            } catch (e: Exception) {
+                Log.e("ProfileFragment", "Failed to fetch profile", e)
             }
         }
     }
+
 }
