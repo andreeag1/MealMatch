@@ -8,7 +8,6 @@ import android.view.ViewGroup
 import android.widget.EditText
 import androidx.fragment.app.Fragment
 import com.mealmatch.databinding.FragmentProfileBinding
-import java.util.Optional
 import androidx.appcompat.app.AlertDialog
 import android.util.Log
 import android.widget.Spinner
@@ -18,9 +17,8 @@ import com.mealmatch.R
 import com.mealmatch.data.model.UserPreferenceMessage
 import com.mealmatch.data.model.UserProfileMessage
 import com.mealmatch.ui.auth.AuthActivity
+import com.mealmatch.data.network.repository.ProfilePrefRepository
 import kotlinx.coroutines.launch
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 
 data class UserPreferences(
     var username: String,
@@ -33,6 +31,8 @@ data class UserPreferences(
 
 
 class ProfileFragment : Fragment() {
+    private val profilePrefRepository = ProfilePrefRepository()
+
     val userSettings = UserPreferences(
         username = "testUsername",
         email = "testemail@gmail.com"
@@ -61,7 +61,8 @@ class ProfileFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setProfileInfo()
-
+        fetchPreferences()
+        
         // Prompt if preferences are empty
         if (userSettings.cuisines.isNullOrEmpty() &&
             userSettings.dietary.isNullOrEmpty() &&
@@ -194,23 +195,34 @@ class ProfileFragment : Fragment() {
             email = userSettings.email,
             userPreferenceMessage = preferences
         )
-
-//        val repo = UserRepository()
-//
-//        // Send in coroutine scope
-//        lifecycleScope.launch {
-//            try {
-//                val response = repo.submitUserProfile(userProfile)
-//                if (response.isSuccessful) {
-//                    Log.i("ProfileFragment", "Profile successfully saved to backend")
-//                } else {
-//                    Log.e("ProfileFragment", "Failed to save profile: ${response.code()}")
-//                }
-//            } catch (e: Exception) {
-//                Log.e("ProfileFragment", "Network error: ${e.message}")
-//            }
-//        }
+        lifecycleScope.launch {
+            try{
+                profilePrefRepository.createProfilePref("testtoken", userProfile)
+            }catch (e: Exception){
+                Log.e("ProfileFragment", "Failed to save profile")
+            }
+        }
     }
 
-
+    private fun fetchPreferences() {
+        lifecycleScope.launch {
+            try{
+                val response = profilePrefRepository.getProfilePref("testtoken")
+                if (response.isSuccessful){
+                    if (response.body() != null){
+                        val profileMessage = response.body()!!.data
+                        val prefs = profileMessage?.userPreferenceMessage
+                        handleEditPreferences(
+                            prefs?.cuisine ?: "",
+                            prefs?.dietary ?: "",
+                            prefs?.ambiance ?: "",
+                            prefs?.budget ?: ""
+                        )
+                    }
+                }
+            }catch (e: Exception){
+                Log.e("ProfileFragment", "Failed to fetch profile")
+            }
+        }
+    }
 }
