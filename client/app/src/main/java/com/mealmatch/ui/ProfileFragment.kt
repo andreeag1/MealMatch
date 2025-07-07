@@ -14,6 +14,7 @@ import android.widget.Spinner
 import android.widget.ArrayAdapter
 import androidx.lifecycle.lifecycleScope
 import com.mealmatch.R
+import com.mealmatch.data.local.TokenManager
 import com.mealmatch.data.model.UserPreferenceMessage
 import com.mealmatch.data.model.UserProfileMessage
 import com.mealmatch.ui.auth.AuthActivity
@@ -71,7 +72,7 @@ class ProfileFragment : Fragment() {
         ) {
             showInitialPreferencesDialog()
         }
-
+        fetchPreferences()
     }
 
     override fun onDestroyView() {
@@ -180,55 +181,67 @@ class ProfileFragment : Fragment() {
             .show()
     }
 
-
     private fun sendPreferencesToBackend() {
-        val preferences = UserPreferenceMessage(
-            cuisine = userSettings.cuisines ?: "",
-            dietary = userSettings.dietary ?: "",
-            ambiance = userSettings.ambiance ?: "",
-            budget = userSettings.budget ?: ""
-        )
+        val token = TokenManager.getToken(requireContext())
+        if (token != null){
+            val preferences = UserPreferenceMessage(
+                cuisine = userSettings.cuisines ?: "",
+                dietary = userSettings.dietary ?: "",
+                ambiance = userSettings.ambiance ?: "",
+                budget = userSettings.budget ?: ""
+            )
 
-        val userProfile = UserProfileMessage(
-            userId = "some_user_id",
-            username = userSettings.username,
-            email = userSettings.email,
-            userPreferenceMessage = preferences
-        )
-        lifecycleScope.launch {
-            try{
-                profilePrefRepository.createProfilePref("testtoken", userProfile)
-            }catch (e: Exception){
-                Log.e("ProfileFragment", "Failed to save profile")
+            val userProfile = UserProfileMessage(
+                userId = token,
+                username = userSettings.username,
+                email = userSettings.email,
+                userPreferenceMessage = preferences
+            )
+            lifecycleScope.launch {
+                try{
+                    profilePrefRepository.createProfilePref(token, userProfile)
+                }catch (e: Exception){
+                    Log.e("ProfileFragment", "Failed to save profile")
+                }
             }
+        }else{
+            Log.e("ProfileFragment", "Failed to save profile due to empty token")
+
         }
     }
 
     private fun fetchPreferences() {
+        val token = TokenManager.getToken(requireContext())
         lifecycleScope.launch {
             try {
-                val response = profilePrefRepository.getProfilePref("testtoken")
-                if (response.isSuccessful) {
-                    val profileMessage = response.body()?.data
-                    val prefs = profileMessage?.userPreferenceMessage
+                val token = TokenManager.getToken(requireContext())
+                if (token != null) {
+                    val response = profilePrefRepository.getProfilePref(token)
+                    if (response.isSuccessful) {
+                        val profileMessage = response.body()?.data
+                        val prefs = profileMessage?.userPreferenceMessage
 
-                    handleEditPreferences(
-                        prefs?.cuisine ?: "",
-                        prefs?.dietary ?: "",
-                        prefs?.ambiance ?: "",
-                        prefs?.budget ?: ""
-                    )
+                        handleEditPreferences(
+                            prefs?.cuisine ?: "",
+                            prefs?.dietary ?: "",
+                            prefs?.ambiance ?: "",
+                            prefs?.budget ?: ""
+                        )
 
-                    // Only show the popup if all fields are still empty
-                    if ((prefs?.cuisine.isNullOrEmpty() &&
-                                prefs?.dietary.isNullOrEmpty() &&
-                                prefs?.ambiance.isNullOrEmpty() &&
-                                prefs?.budget.isNullOrEmpty())) {
-                        showInitialPreferencesDialog()
+                        // Only show the popup if all fields are still empty
+                        if ((prefs?.cuisine.isNullOrEmpty() &&
+                                    prefs?.dietary.isNullOrEmpty() &&
+                                    prefs?.ambiance.isNullOrEmpty() &&
+                                    prefs?.budget.isNullOrEmpty())
+                        ) {
+                            showInitialPreferencesDialog()
+                        }
+
+                    } else {
+                        Log.e("ProfileFragment", "Profile fetch unsuccessful")
                     }
-
-                } else {
-                    Log.e("ProfileFragment", "Profile fetch unsuccessful")
+                }else {
+                    Log.e("ProfileFragment", "empty token")
                 }
             } catch (e: Exception) {
                 Log.e("ProfileFragment", "Failed to fetch profile", e)
