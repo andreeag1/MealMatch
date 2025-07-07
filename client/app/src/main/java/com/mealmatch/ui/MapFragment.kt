@@ -12,6 +12,10 @@ import androidx.fragment.app.commitNow
 import androidx.recyclerview.widget.LinearLayoutManager
 import android.location.Geocoder
 import androidx.lifecycle.lifecycleScope
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -23,6 +27,15 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.libraries.places.api.Places
+import com.google.android.libraries.places.api.net.PlacesClient
+import com.google.android.libraries.places.api.net.SearchNearbyRequest
+import com.google.android.libraries.places.api.model.Place
+import com.google.android.libraries.places.api.model.CircularBounds
+import com.google.android.libraries.places.api.model.PhotoMetadata
+import com.google.android.libraries.places.api.net.FetchPhotoRequest
+
+
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.mealmatch.R
 import com.mealmatch.databinding.FragmentMapBinding
@@ -38,6 +51,18 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private lateinit var bottomSheet: BottomSheetBehavior<View>
     private lateinit var restaurantAdapter: RestaurantAdapter
 
+    private lateinit var placesClient: PlacesClient
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        if (!Places.isInitialized()) {
+            Places.initialize(
+                requireContext(),        // ctx
+                getString(R.string.google_maps_key)  // keep key in gradle/local.properties
+            )
+        }
+        placesClient = Places.createClient(requireContext())
+    }
     // Keep full list for resetting when query is empty
     private var allRestaurants = listOf<Restaurant>()
 
@@ -69,12 +94,12 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         bottomSheet.state = BottomSheetBehavior.STATE_COLLAPSED
 
         // 3. RecyclerView + adapter
-        restaurantAdapter = RestaurantAdapter()
+        restaurantAdapter = RestaurantAdapter(placesClient)
         binding.rvRestaurants.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = restaurantAdapter
         }
-        loadDummyRestaurants()
+        //loadDummyRestaurants()
 
 
         binding.searchView.apply {
@@ -111,6 +136,23 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         })
     }
 
+    private val locationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) map.isMyLocationEnabled = true
+        }
+
+    private fun enableMyLocation() {
+        if (ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            map.isMyLocationEnabled = true
+        } else {
+            locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+    }
+
     private fun searchMapLocation(query: String) {
         // offload geocoding to a background thread
         lifecycleScope.launch(Dispatchers.IO) {
@@ -143,25 +185,92 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         }
     }
 
-    override fun onMapReady(googleMap: GoogleMap) {
-        map = googleMap
-        val defaultLocation = LatLng(43.4723, -80.5449) // Waterloo, ON
-        map.addMarker(
-            MarkerOptions()
-                .position(defaultLocation)
-                .title("Waterloo, ON")
+    private fun fetchNearbyRestaurants(center: LatLng) {
+        // 1) Request the real fields, including photo metadata
+        val placeFields = listOf(
+            Place.Field.NAME,
+            Place.Field.LAT_LNG,
+            Place.Field.RATING,
+            Place.Field.TYPES,
+            Place.Field.PHOTO_METADATAS
         )
-        map.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 13f))
+
+        // 2) Define the search circle
+        val circle = CircularBounds.newInstance(center, /*radiusMeters=*/1500.0)
+
+        // 3) Build & fire the request
+        val request = SearchNearbyRequest.builder(circle, placeFields)
+            .setIncludedTypes(listOf("restaurant"))
+            .setMaxResultCount(20)
+            .build()
+
+        placesClient.searchNearby(request)
+            .addOnSuccessListener { response ->
+                val results = response.places.map { p ->
+                    // Grab the first photo metadata (if any)
+                    val photoMd = p.photoMetadatas?.firstOrNull()
+                    val raw = p.placeTypes?.firstOrNull()?.toString() ?: "unknown"
+
+                    val cuisine = raw
+                        .replace("_", " ")
+                        .split(" ")
+                        .joinToString(" ") { it.replaceFirstChar(Char::uppercaseChar)
+                        }
+                    Restaurant(
+                        name          = p.name    ?: "Unnamed",
+                        cuisine       = cuisine.toString(),
+                        rating        = p.rating  ?: 0.0,
+                        distance      = 0.0,           // compute this later
+                        latLng        = p.latLng!!,
+                        photoMetadata = photoMd
+                    )
+                }
+                updateUi(results)
+            }
+            .addOnFailureListener { it.printStackTrace() }
     }
 
-    private fun loadDummyRestaurants() {
-        allRestaurants = listOf(
-            Restaurant("The Bauer Kitchen",      "Contemporary", 4.5, 0.8),
-            Restaurant("Vincenzo's",             "Italian Deli", 4.7, 1.2),
-            Restaurant("Beertown Public House",  "Gastropub",    4.4, 1.5)
-        )
-        restaurantAdapter.submitList(allRestaurants)
+
+
+
+    private fun updateUi(restaurants: List<Restaurant>) {
+        allRestaurants = restaurants
+        restaurantAdapter.submitList(restaurants)
+
+        map.clear()
+        restaurants.forEach { r ->
+            map.addMarker(
+                MarkerOptions()
+                    .position(r.latLng)
+                    .title(r.name)
+            )
+        }
     }
+    override fun onMapReady(googleMap: GoogleMap) {
+        map = googleMap
+        enableMyLocation()               // ask runtime permission
+
+        val waterloo = LatLng(43.4723, -80.5449)
+        map.moveCamera(CameraUpdateFactory.newLatLngZoom(waterloo, 14f))
+
+        // run first fetch when the map is ready
+        fetchNearbyRestaurants(waterloo)
+
+        // optional: refresh when camera stops moving
+        map.setOnCameraIdleListener {
+            fetchNearbyRestaurants(map.cameraPosition.target)
+        }
+    }
+
+
+//    private fun loadDummyRestaurants() {
+//        allRestaurants = listOf(
+//            Restaurant("The Bauer Kitchen",      "Contemporary", 4.5, 0.8, LatLng(43.4723, -80.5449)),
+//            Restaurant("Vincenzo's",             "Italian Deli", 4.7, 1.2, LatLng(43.4723, -80.5449)),
+//            Restaurant("Beertown Public House",  "Gastropub",    4.4, 1.5, LatLng(43.4723, -80.5449))
+//        )
+//        restaurantAdapter.submitList(allRestaurants)
+//    }
 
     private fun filterRestaurants(query: String?) {
         val text = query.orEmpty().trim()
