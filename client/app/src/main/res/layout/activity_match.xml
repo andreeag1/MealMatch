@@ -5,13 +5,26 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/white"
-    tools:context=".ui.MatchActivity">
+    tools:context=".ui.match.MatchActivity">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="?attr/colorPrimary"
+        android:elevation="4dp"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:navigationIcon="@drawable/ic_arrow_back"
+        app:title="Match Session" />
 
     <TextView
         android:id="@+id/matchTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Match Page!"
+        android:text="Do you like this restaurant?"
         android:textSize="28sp"
         android:textStyle="bold"
         android:textColor="@android:color/black"
