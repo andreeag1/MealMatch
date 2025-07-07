@@ -34,7 +34,9 @@ import com.google.android.libraries.places.api.net.SearchNearbyRequest
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.google.android.gms.maps.model.Marker
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
+import android.location.Location
 
 import com.mealmatch.R
 import com.mealmatch.data.model.Restaurant
@@ -45,6 +47,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import android.Manifest
 import android.content.pm.PackageManager
+
 
 class MapFragment : Fragment(), OnMapReadyCallback {
 
@@ -63,6 +66,10 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private lateinit var rvMapSheet: RecyclerView
     private lateinit var placesClient: PlacesClient
 
+
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private var currentLocation: Location? = null
+
     // Keep full list for resetting when query is empty
     private var allRestaurants = listOf<Restaurant>()
 
@@ -75,6 +82,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             )
         }
         placesClient = Places.createClient(requireContext())
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
     }
 
     override fun onCreateView(
@@ -203,7 +211,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         }
     }
 
-    private fun fetchNearbyRestaurants(center: LatLng) {
+    private fun fetchNearbyRestaurants(center: LatLng, origin: Location) {
         val placeFields = listOf(
             Place.Field.NAME,
             Place.Field.LAT_LNG,
@@ -227,11 +235,16 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                         .replace("_", " ")
                         .split(" ")
                         .joinToString(" ") { it.replaceFirstChar(Char::uppercaseChar) }
+                    val rLoc = Location("").apply {
+                        latitude = p.latLng!!.latitude
+                        longitude = p.latLng!!.longitude
+                    }
+                    val distKm = origin.distanceTo(rLoc) / 1000.0
                     Restaurant(
                         name          = p.name ?: "Unnamed",
                         cuisine       = cuisine,
                         rating        = p.rating ?: 0.0,
-                        distance      = 0.0,
+                        distance      = distKm,
                         latLng        = p.latLng!!,
                         photoMetadata = photoMd
                     )
@@ -261,15 +274,29 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         map = googleMap
         enableMyLocation()
 
-        val waterloo = LatLng(43.4723, -80.5449)
-        map.moveCamera(CameraUpdateFactory.newLatLngZoom(waterloo, 14f))
+        fusedLocationClient.lastLocation
+            .addOnSuccessListener { location ->
+                if (location != null) {
+                    currentLocation = location
+                    // Use current location for initial fetch
+                    val currentLatLng = LatLng(location.latitude, location.longitude)
+                    map.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 14f))
+                    fetchNearbyRestaurants(currentLatLng, location)
+                    showList()
 
-        fetchNearbyRestaurants(waterloo)
-        showList()
+                    // update on camera idle
+                    map.setOnCameraIdleListener {
+                        // Use the last known current location for subsequent fetches
+                        currentLocation?.let { loc ->
+                            fetchNearbyRestaurants(map.cameraPosition.target, loc)
+                        }
+                    }
+                }
+            }
+        // Fallback or initial view before location is fetched
+        // val waterloo = LatLng(43.4723, -80.5449)
+        // map.moveCamera(CameraUpdateFactory.newLatLngZoom(waterloo, 14f))
 
-        map.setOnCameraIdleListener {
-            fetchNearbyRestaurants(map.cameraPosition.target)
-        }
         map.setOnMarkerClickListener { marker ->
             (marker.tag as? Restaurant)?.let { showDetailSheet(it) }
             true
