@@ -17,3 +17,12 @@ data class Swipe(
 data class SubmitSwipesRequest(
     val swipes: List<Swipe>
 )
+
+data class MatchResultResponse(
+    val restaurantId: String?,
+    val restaurantName: String?
+)
+
+data class SessionStatusResponse(
+    val status: String
+)

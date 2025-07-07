@@ -53,6 +53,7 @@ class MatchActivity : AppCompatActivity() {
             return
         }
 
+        setupToolbar()
         setupButtons()
         observeViewModel()
 
@@ -62,6 +63,14 @@ class MatchActivity : AppCompatActivity() {
         } else {
             // If a session ID exists, we are in a group session.
             showNextCard()
+        }
+    }
+
+    private fun setupToolbar() {
+        setSupportActionBar(binding.toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        binding.toolbar.setNavigationOnClickListener {
+            onBackPressedDispatcher.onBackPressed()
         }
     }
 
@@ -114,6 +123,7 @@ class MatchActivity : AppCompatActivity() {
     private fun showNextCard() {
         if (currIndex >= restaurants.size) {
             submitAllSwipes()
+            return
         }
         val card = createCard(restaurants[currIndex])
         setupSwipe(card)
@@ -151,13 +161,47 @@ class MatchActivity : AppCompatActivity() {
 
         viewModel.submitSwipesResult.observe(this) { result ->
             when (result) {
-                is ApiResult.Loading -> {  }
+                is ApiResult.Loading -> {
+                    binding.cardContainer.visibility = View.GONE
+                    binding.buttonContainer.visibility = View.GONE
+                    binding.matchTitle.text = "Waiting for other members..."
+                }
                 is ApiResult.Success -> {
                     Toast.makeText(this, "Your choices have been submitted!", Toast.LENGTH_LONG).show()
-                    finish()
+                    // Start polling for the result after successfully submitting swipes.
+                    val token = TokenManager.getToken(this)
+                    if (token != null && sessionId != null) {
+                        viewModel.pollForSessionResult("Bearer $token", sessionId!!)
+                    }
                 }
                 is ApiResult.Error -> {
                     Toast.makeText(this, "Error submitting choices: ${result.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+
+        viewModel.matchResult.observe(this) { result ->
+            when (result) {
+                is ApiResult.Loading -> {  }
+                is ApiResult.Success -> {
+                    val match = result.data
+                    if (match.restaurantId != null) {
+                        val matchedRestaurant = restaurants.find { it.id == match.restaurantId }
+                        if (matchedRestaurant != null) {
+                            binding.matchTitle.text = "It's a Match!"
+                            binding.cardContainer.removeAllViews()
+                            val resultCard = createCard(matchedRestaurant)
+                            binding.cardContainer.addView(resultCard)
+                            binding.cardContainer.visibility = View.VISIBLE
+                        } else {
+                            binding.matchTitle.text = "Match found, but restaurant details are missing."
+                        }
+                    } else {
+                        binding.matchTitle.text = "No match was found."
+                    }
+                }
+                is ApiResult.Error -> {
+                    Toast.makeText(this, "Error getting match result: ${result.message}", Toast.LENGTH_LONG).show()
                 }
             }
         }
