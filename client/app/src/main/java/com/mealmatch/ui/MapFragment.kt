@@ -6,6 +6,9 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.TextView
+import android.widget.RatingBar
 import android.view.inputmethod.InputMethodManager
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.widget.SearchView
@@ -30,6 +33,9 @@ import com.google.android.libraries.places.api.net.PlacesClient
 import com.google.android.libraries.places.api.net.SearchNearbyRequest
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.tabs.TabLayout
+import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.android.gms.maps.model.Marker
+
 import com.mealmatch.R
 import com.mealmatch.data.model.Restaurant
 import com.mealmatch.databinding.FragmentMapBinding
@@ -49,14 +55,12 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private lateinit var bottomSheetBehavior: BottomSheetBehavior<View>
     private lateinit var restaurantAdapter: RestaurantAdapter
 
-    // ← NEW: tabs and the two SearchViews
     private lateinit var tabLayout: TabLayout
     private lateinit var svQuery: SearchView
     private lateinit var svAddress: SearchView
 
     private lateinit var rvFull: RecyclerView
     private lateinit var rvMapSheet: RecyclerView
-
     private lateinit var placesClient: PlacesClient
 
     // Keep full list for resetting when query is empty
@@ -84,29 +88,23 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // ─── 1) Bind views ──────────────────────────────────────────────
         tabLayout    = binding.tabLayout
         svQuery      = binding.svQuery
         svAddress    = binding.svAddress
         rvFull       = binding.rvRestaurantsFull
         rvMapSheet   = binding.rvMapRestaurants
 
-        // ─── 2) Set up GoogleMap fragment ──────────────────────────────
         var mapFrag = childFragmentManager.findFragmentById(R.id.google_map) as? SupportMapFragment
         if (mapFrag == null) {
             mapFrag = SupportMapFragment.newInstance()
-            childFragmentManager.commitNow {
-                replace(R.id.google_map, mapFrag)
-            }
+            childFragmentManager.commitNow { replace(R.id.google_map, mapFrag) }
         }
         mapFrag.getMapAsync(this)
 
-        // ─── 3) Bottom‐sheet setup (hidden by default) ─────────────────
         bottomSheetBehavior = BottomSheetBehavior.from(binding.bottomSheet)
         bottomSheetBehavior.isHideable = true
         bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
 
-        // ─── 4) RecyclerViews + adapter ────────────────────────────────
         restaurantAdapter = RestaurantAdapter(placesClient)
 
         rvFull.apply {
@@ -118,24 +116,18 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             adapter       = restaurantAdapter
         }
 
-        // Kick off your first load if you want (or wait for the Map callback)
-        // fetchNearbyRestaurants(...)
-
-        // ─── 5) TabLayout: Restaurants vs Map ──────────────────────────
         tabLayout.apply {
             addTab(newTab().setText("Restaurants"))
             addTab(newTab().setText("Map"))
-            selectTab(getTabAt(0))  // start on Restaurants
+            selectTab(getTabAt(0))
 
             addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
                 override fun onTabSelected(tab: TabLayout.Tab) {
                     if (tab.position == 0) {
-                        // RESTAURANTS tab
                         rvFull.visibility           = View.VISIBLE
                         binding.googleMap.visibility = View.GONE
                         bottomSheetBehavior.state    = BottomSheetBehavior.STATE_HIDDEN
                     } else {
-                        // MAP tab
                         rvFull.visibility           = View.GONE
                         binding.googleMap.visibility = View.VISIBLE
                         bottomSheetBehavior.state    = BottomSheetBehavior.STATE_HIDDEN
@@ -146,7 +138,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             })
         }
 
-        // ─── 6) Search by name / cuisine ────────────────────────────────
         svQuery.apply {
             setIconifiedByDefault(false)
             isIconified = false
@@ -160,7 +151,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             })
         }
 
-        // ─── 7) Search by address ───────────────────────────────────────
         svAddress.apply {
             setIconifiedByDefault(false)
             isIconified = false
@@ -255,10 +245,17 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         allRestaurants = restaurants
         restaurantAdapter.submitList(restaurants)
         map.clear()
+
         restaurants.forEach { r ->
-            map.addMarker(MarkerOptions().position(r.latLng).title(r.name))
+            val marker = map.addMarker(
+                MarkerOptions()
+                    .position(r.latLng)
+                    .title(r.name)
+            )
+            marker?.tag = r
         }
     }
+
 
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
@@ -267,26 +264,25 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         val waterloo = LatLng(43.4723, -80.5449)
         map.moveCamera(CameraUpdateFactory.newLatLngZoom(waterloo, 14f))
 
-        // FIRST fetch + show list
         fetchNearbyRestaurants(waterloo)
         showList()
 
         map.setOnCameraIdleListener {
             fetchNearbyRestaurants(map.cameraPosition.target)
         }
+        map.setOnMarkerClickListener { marker ->
+            (marker.tag as? Restaurant)?.let { showDetailSheet(it) }
+            true
+        }
     }
 
     private fun showList() {
-        // hide the map container
         binding.googleMap.visibility = View.GONE
-        // expand the sheet so it fills from under the AppBar down
         bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
     }
 
     private fun showMap() {
-        // show the map full-screen
         binding.googleMap.visibility = View.VISIBLE
-        // hide the sheet off-screen
         bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
     }
 
@@ -298,6 +294,30 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             it.name.contains(text, ignoreCase = true)
         }
         restaurantAdapter.submitList(filtered)
+    }
+
+    private fun showDetailSheet(r: Restaurant) {
+        val dialog = BottomSheetDialog(requireContext())
+        val sheetView = layoutInflater.inflate(R.layout.restaurant_details, null)
+
+        val ivPhoto    = sheetView.findViewById<ImageView>(R.id.ivPhoto)
+        val tvName     = sheetView.findViewById<TextView>(R.id.tvName)
+        val rbRating   = sheetView.findViewById<RatingBar>(R.id.rbRating)
+        val tvDistance = sheetView.findViewById<TextView>(R.id.tvDistance)
+
+        tvName.text     = r.name
+        rbRating.rating = r.rating.toFloat()
+        tvDistance.text = String.format("%.1f km", r.distance)
+
+        r.photoMetadata?.let { meta ->
+            placesClient.fetchPhoto(FetchPhotoRequest.builder(meta).build())
+                .addOnSuccessListener { resp ->
+                    ivPhoto.setImageBitmap(resp.bitmap)
+                }
+        }
+
+        dialog.setContentView(sheetView)
+        dialog.show()
     }
 
     override fun onDestroyView() {
