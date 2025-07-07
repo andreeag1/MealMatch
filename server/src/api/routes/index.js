@@ -11,6 +11,6 @@ router.use("/users", userRoutes);
 router.use("/groups", groupRoutes);
 router.use("/auth", authRoutes);
 router.use("/sessions", sessionRoutes);
-router.use("/posts", authRoutes);
+router.use("/posts", postRoutes);
 
 export default router;

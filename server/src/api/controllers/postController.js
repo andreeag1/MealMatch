@@ -7,7 +7,7 @@ import Post from "../models/postModel.js";
  */
 export const getAllPosts = async (req, res) => {
   try {
-    const posts = await Post.find({}).sort({ createdAt: -1 });
+    const posts = await Post.find().populate("user", "username").sort({ createdAt: -1 });
     return response(res, "List of Posts", 200, true, posts);
   } catch (error) {
     return response(res, "Internal server error", 500, false, {
@@ -22,23 +22,23 @@ export const getAllPosts = async (req, res) => {
  */
 export const createPost = async (req, res) => {
   try {
-    const { caption, rating = 0, imageUrl = null, user } = req.body;
+    const { caption, rating, imageUrl } = req.body;
+    const userId = req.user._id;
 
-    if (!caption || !user?.username) {
-      return response(res, "Caption and username are required", 400, false);
-    }
 
     const newPost = new Post({
       caption,
       rating,
       imageUrl,
-      user,
+      user: userId,
     });
 
     const savedPost = await newPost.save();
-    return response(res, "Post created successfully", 201, true, savedPost);
+    const populatedPost = await savedPost.populate("user", "username");
+
+    return response(res, "Post created", 201, true, populatedPost);
   } catch (error) {
-    return response(res, "Internal server error", 500, false, {
+    return response(res, "Failed to create post", 500, false, {
       error: error.message,
     });
   }
