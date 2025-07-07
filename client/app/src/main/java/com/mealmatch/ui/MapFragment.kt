@@ -1,25 +1,20 @@
 package com.mealmatch.ui
 
 import android.content.Context
+import android.location.Geocoder
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.widget.SearchView
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commitNow
-import androidx.recyclerview.widget.LinearLayoutManager
-import android.location.Geocoder
 import androidx.lifecycle.lifecycleScope
-import android.Manifest
-import android.content.pm.PackageManager
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
-
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -28,19 +23,22 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.libraries.places.api.Places
+import com.google.android.libraries.places.api.model.CircularBounds
+import com.google.android.libraries.places.api.model.Place
+import com.google.android.libraries.places.api.net.FetchPhotoRequest
 import com.google.android.libraries.places.api.net.PlacesClient
 import com.google.android.libraries.places.api.net.SearchNearbyRequest
-import com.google.android.libraries.places.api.model.Place
-import com.google.android.libraries.places.api.model.CircularBounds
-import com.google.android.libraries.places.api.model.PhotoMetadata
-import com.google.android.libraries.places.api.net.FetchPhotoRequest
-
-
 import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.android.material.tabs.TabLayout
 import com.mealmatch.R
-import com.mealmatch.databinding.FragmentMapBinding
 import com.mealmatch.data.model.Restaurant
+import com.mealmatch.databinding.FragmentMapBinding
 import com.mealmatch.ui.map.RestaurantAdapter
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import android.Manifest
+import android.content.pm.PackageManager
 
 class MapFragment : Fragment(), OnMapReadyCallback {
 
@@ -48,23 +46,32 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private val binding get() = _binding!!
 
     private lateinit var map: GoogleMap
-    private lateinit var bottomSheet: BottomSheetBehavior<View>
+    private lateinit var bottomSheetBehavior: BottomSheetBehavior<View>
     private lateinit var restaurantAdapter: RestaurantAdapter
 
+    // ← NEW: tabs and the two SearchViews
+    private lateinit var tabLayout: TabLayout
+    private lateinit var svQuery: SearchView
+    private lateinit var svAddress: SearchView
+
+    private lateinit var rvFull: RecyclerView
+    private lateinit var rvMapSheet: RecyclerView
+
     private lateinit var placesClient: PlacesClient
+
+    // Keep full list for resetting when query is empty
+    private var allRestaurants = listOf<Restaurant>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (!Places.isInitialized()) {
             Places.initialize(
-                requireContext(),        // ctx
-                getString(R.string.google_maps_key)  // keep key in gradle/local.properties
+                requireContext(),
+                getString(R.string.google_maps_key)
             )
         }
         placesClient = Places.createClient(requireContext())
     }
-    // Keep full list for resetting when query is empty
-    private var allRestaurants = listOf<Restaurant>()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -74,12 +81,17 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         return binding.root
     }
 
-
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // 1. Ensure SupportMapFragment is present
+        // ─── 1) Bind views ──────────────────────────────────────────────
+        tabLayout    = binding.tabLayout
+        svQuery      = binding.svQuery
+        svAddress    = binding.svAddress
+        rvFull       = binding.rvRestaurantsFull
+        rvMapSheet   = binding.rvMapRestaurants
+
+        // ─── 2) Set up GoogleMap fragment ──────────────────────────────
         var mapFrag = childFragmentManager.findFragmentById(R.id.google_map) as? SupportMapFragment
         if (mapFrag == null) {
             mapFrag = SupportMapFragment.newInstance()
@@ -89,51 +101,79 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         }
         mapFrag.getMapAsync(this)
 
-        // 2. Bottom sheet setup
-        bottomSheet = BottomSheetBehavior.from(binding.bottomSheet)
-        bottomSheet.state = BottomSheetBehavior.STATE_COLLAPSED
+        // ─── 3) Bottom‐sheet setup (hidden by default) ─────────────────
+        bottomSheetBehavior = BottomSheetBehavior.from(binding.bottomSheet)
+        bottomSheetBehavior.isHideable = true
+        bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
 
-        // 3. RecyclerView + adapter
+        // ─── 4) RecyclerViews + adapter ────────────────────────────────
         restaurantAdapter = RestaurantAdapter(placesClient)
-        binding.rvRestaurants.apply {
+
+        rvFull.apply {
             layoutManager = LinearLayoutManager(requireContext())
-            adapter = restaurantAdapter
+            adapter       = restaurantAdapter
         }
-        //loadDummyRestaurants()
-
-
-        binding.searchView.apply {
-            // never collapse back to icon
-            setIconifiedByDefault(false)
-            setIconified(false)
-            onActionViewExpanded()
+        rvMapSheet.apply {
+            layoutManager = LinearLayoutManager(requireContext())
+            adapter       = restaurantAdapter
         }
-        // tapping anywhere expands & shows keyboard
-        binding.searchView.setOnClickListener {
-            binding.searchView.apply {
-                if (isIconified) {
-                    isIconified = false
-                    onActionViewExpanded()
+
+        // Kick off your first load if you want (or wait for the Map callback)
+        // fetchNearbyRestaurants(...)
+
+        // ─── 5) TabLayout: Restaurants vs Map ──────────────────────────
+        tabLayout.apply {
+            addTab(newTab().setText("Restaurants"))
+            addTab(newTab().setText("Map"))
+            selectTab(getTabAt(0))  // start on Restaurants
+
+            addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+                override fun onTabSelected(tab: TabLayout.Tab) {
+                    if (tab.position == 0) {
+                        // RESTAURANTS tab
+                        rvFull.visibility           = View.VISIBLE
+                        binding.googleMap.visibility = View.GONE
+                        bottomSheetBehavior.state    = BottomSheetBehavior.STATE_HIDDEN
+                    } else {
+                        // MAP tab
+                        rvFull.visibility           = View.GONE
+                        binding.googleMap.visibility = View.VISIBLE
+                        bottomSheetBehavior.state    = BottomSheetBehavior.STATE_HIDDEN
+                    }
                 }
-                requestFocus()
-            }
-            val imm = requireContext()
-                .getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-            imm.showSoftInput(binding.searchView.findFocus(), InputMethodManager.SHOW_IMPLICIT)
-        }
-        // keep it expanded when focused
-        binding.searchView.setOnQueryTextFocusChangeListener { _, hasFocus ->
-            if (hasFocus) binding.searchView.isIconified = false
+                override fun onTabUnselected(tab: TabLayout.Tab) {}
+                override fun onTabReselected(tab: TabLayout.Tab) {}
+            })
         }
 
-        binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-            override fun onQueryTextSubmit(query: String?): Boolean {
-                binding.searchView.clearFocus()
-                query?.takeIf { it.isNotBlank() }?.let { searchMapLocation(it) }
-                return true
-            }
-            override fun onQueryTextChange(newText: String?) = true
-        })
+        // ─── 6) Search by name / cuisine ────────────────────────────────
+        svQuery.apply {
+            setIconifiedByDefault(false)
+            isIconified = false
+            queryHint   = "Search restaurant, cuisine…"
+            setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+                override fun onQueryTextSubmit(q: String?) = true
+                override fun onQueryTextChange(q: String?): Boolean {
+                    filterRestaurants(q)
+                    return true
+                }
+            })
+        }
+
+        // ─── 7) Search by address ───────────────────────────────────────
+        svAddress.apply {
+            setIconifiedByDefault(false)
+            isIconified = false
+            queryHint   = "Current location"
+            setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+                override fun onQueryTextSubmit(address: String?): Boolean {
+                    clearFocus()
+                    address?.takeIf { it.isNotBlank() }?.let { searchMapLocation(it) }
+                    return true
+                }
+                override fun onQueryTextChange(s: String?) = true
+            })
+        }
     }
 
     private val locationPermissionLauncher =
@@ -154,7 +194,6 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     }
 
     private fun searchMapLocation(query: String) {
-        // offload geocoding to a background thread
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 val geocoder = Geocoder(requireContext())
@@ -162,31 +201,19 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                 if (!results.isNullOrEmpty()) {
                     val addr = results[0]
                     val target = LatLng(addr.latitude, addr.longitude)
-
                     withContext(Dispatchers.Main) {
-                        // clear old markers (optional)
                         map.clear()
-                        // drop a new pin
-                        map.addMarker(
-                            MarkerOptions()
-                                .position(target)
-                                .title(query)
-                        )
-                        // zoom in
-                        map.animateCamera(
-                            CameraUpdateFactory.newLatLngZoom(target, 13f)
-                        )
+                        map.addMarker(MarkerOptions().position(target).title(query))
+                        map.animateCamera(CameraUpdateFactory.newLatLngZoom(target, 13f))
                     }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
-                // you might show a toast on failure
             }
         }
     }
 
     private fun fetchNearbyRestaurants(center: LatLng) {
-        // 1) Request the real fields, including photo metadata
         val placeFields = listOf(
             Place.Field.NAME,
             Place.Field.LAT_LNG,
@@ -194,33 +221,27 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             Place.Field.TYPES,
             Place.Field.PHOTO_METADATAS
         )
-
-        // 2) Define the search circle
-        val circle = CircularBounds.newInstance(center, /*radiusMeters=*/1500.0)
-
-        // 3) Build & fire the request
+        val circle = CircularBounds.newInstance(center, 1500.0)
         val request = SearchNearbyRequest.builder(circle, placeFields)
-            .setIncludedTypes(listOf("restaurant"))
+            .setIncludedPrimaryTypes(listOf("restaurant"))
+            .setExcludedPrimaryTypes(listOf("lodging"))
             .setMaxResultCount(20)
             .build()
 
         placesClient.searchNearby(request)
-            .addOnSuccessListener { response ->
-                val results = response.places.map { p ->
-                    // Grab the first photo metadata (if any)
+            .addOnSuccessListener { resp ->
+                val results = resp.places.map { p ->
                     val photoMd = p.photoMetadatas?.firstOrNull()
                     val raw = p.placeTypes?.firstOrNull()?.toString() ?: "unknown"
-
                     val cuisine = raw
                         .replace("_", " ")
                         .split(" ")
-                        .joinToString(" ") { it.replaceFirstChar(Char::uppercaseChar)
-                        }
+                        .joinToString(" ") { it.replaceFirstChar(Char::uppercaseChar) }
                     Restaurant(
-                        name          = p.name    ?: "Unnamed",
-                        cuisine       = cuisine.toString(),
-                        rating        = p.rating  ?: 0.0,
-                        distance      = 0.0,           // compute this later
+                        name          = p.name ?: "Unnamed",
+                        cuisine       = cuisine,
+                        rating        = p.rating ?: 0.0,
+                        distance      = 0.0,
                         latLng        = p.latLng!!,
                         photoMetadata = photoMd
                     )
@@ -230,56 +251,51 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             .addOnFailureListener { it.printStackTrace() }
     }
 
-
-
-
     private fun updateUi(restaurants: List<Restaurant>) {
         allRestaurants = restaurants
         restaurantAdapter.submitList(restaurants)
-
         map.clear()
         restaurants.forEach { r ->
-            map.addMarker(
-                MarkerOptions()
-                    .position(r.latLng)
-                    .title(r.name)
-            )
+            map.addMarker(MarkerOptions().position(r.latLng).title(r.name))
         }
     }
+
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
-        enableMyLocation()               // ask runtime permission
+        enableMyLocation()
 
         val waterloo = LatLng(43.4723, -80.5449)
         map.moveCamera(CameraUpdateFactory.newLatLngZoom(waterloo, 14f))
 
-        // run first fetch when the map is ready
+        // FIRST fetch + show list
         fetchNearbyRestaurants(waterloo)
+        showList()
 
-        // optional: refresh when camera stops moving
         map.setOnCameraIdleListener {
             fetchNearbyRestaurants(map.cameraPosition.target)
         }
     }
 
+    private fun showList() {
+        // hide the map container
+        binding.googleMap.visibility = View.GONE
+        // expand the sheet so it fills from under the AppBar down
+        bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+    }
 
-//    private fun loadDummyRestaurants() {
-//        allRestaurants = listOf(
-//            Restaurant("The Bauer Kitchen",      "Contemporary", 4.5, 0.8, LatLng(43.4723, -80.5449)),
-//            Restaurant("Vincenzo's",             "Italian Deli", 4.7, 1.2, LatLng(43.4723, -80.5449)),
-//            Restaurant("Beertown Public House",  "Gastropub",    4.4, 1.5, LatLng(43.4723, -80.5449))
-//        )
-//        restaurantAdapter.submitList(allRestaurants)
-//    }
+    private fun showMap() {
+        // show the map full-screen
+        binding.googleMap.visibility = View.VISIBLE
+        // hide the sheet off-screen
+        bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+    }
+
 
     private fun filterRestaurants(query: String?) {
         val text = query.orEmpty().trim()
-        val filtered = if (text.isEmpty()) {
-            allRestaurants
-        } else {
-            allRestaurants.filter {
-                it.name.contains(text, ignoreCase = true)
-            }
+        val filtered = if (text.isEmpty()) allRestaurants
+        else allRestaurants.filter {
+            it.name.contains(text, ignoreCase = true)
         }
         restaurantAdapter.submitList(filtered)
     }
