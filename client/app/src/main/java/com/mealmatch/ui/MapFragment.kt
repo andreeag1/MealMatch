@@ -37,6 +37,9 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import android.location.Location
+import android.Manifest
+import android.content.pm.PackageManager
+import android.widget.LinearLayout
 
 import com.mealmatch.R
 import com.mealmatch.data.model.Restaurant
@@ -45,9 +48,6 @@ import com.mealmatch.ui.map.RestaurantAdapter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import android.Manifest
-import android.content.pm.PackageManager
-
 
 class MapFragment : Fragment(), OnMapReadyCallback {
 
@@ -55,7 +55,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private val binding get() = _binding!!
 
     private lateinit var map: GoogleMap
-    private lateinit var bottomSheetBehavior: BottomSheetBehavior<View>
+    private lateinit var bottomSheetBehavior: BottomSheetBehavior<LinearLayout>
     private lateinit var restaurantAdapter: RestaurantAdapter
 
     private lateinit var tabLayout: TabLayout
@@ -66,29 +66,23 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private lateinit var rvMapSheet: RecyclerView
     private lateinit var placesClient: PlacesClient
 
-
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var currentLocation: Location? = null
+
+    // Toggle to allow/disallow fetching on camera move
+    private var fetchOnCameraMoveEnabled = false
 
     // Keep full list for resetting when query is empty
     private var allRestaurants = listOf<Restaurant>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (!Places.isInitialized()) {
-            Places.initialize(
-                requireContext(),
-                getString(R.string.google_maps_key)
-            )
-        }
+        if (!Places.isInitialized()) Places.initialize(requireContext(), getString(R.string.google_maps_key))
         placesClient = Places.createClient(requireContext())
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentMapBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -102,6 +96,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         rvFull       = binding.rvRestaurantsFull
         rvMapSheet   = binding.rvMapRestaurants
 
+        // Setup map fragment
         var mapFrag = childFragmentManager.findFragmentById(R.id.google_map) as? SupportMapFragment
         if (mapFrag == null) {
             mapFrag = SupportMapFragment.newInstance()
@@ -109,9 +104,10 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         }
         mapFrag.getMapAsync(this)
 
-        bottomSheetBehavior = BottomSheetBehavior.from(binding.bottomSheet)
-        bottomSheetBehavior.isHideable = true
-        bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+        bottomSheetBehavior = BottomSheetBehavior.from(binding.bottomSheet).apply {
+            isHideable = true
+            state = BottomSheetBehavior.STATE_HIDDEN
+        }
 
         restaurantAdapter = RestaurantAdapter(placesClient)
 
@@ -124,28 +120,21 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             adapter       = restaurantAdapter
         }
 
+        // Tabs to switch views
         tabLayout.apply {
             addTab(newTab().setText("Restaurants"))
             addTab(newTab().setText("Map"))
             selectTab(getTabAt(0))
-
             addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
                 override fun onTabSelected(tab: TabLayout.Tab) {
-                    if (tab.position == 0) {
-                        rvFull.visibility           = View.VISIBLE
-                        binding.googleMap.visibility = View.GONE
-                        bottomSheetBehavior.state    = BottomSheetBehavior.STATE_HIDDEN
-                    } else {
-                        rvFull.visibility           = View.GONE
-                        binding.googleMap.visibility = View.VISIBLE
-                        bottomSheetBehavior.state    = BottomSheetBehavior.STATE_HIDDEN
-                    }
+                    if (tab.position == 0) showList() else showMap()
                 }
                 override fun onTabUnselected(tab: TabLayout.Tab) {}
                 override fun onTabReselected(tab: TabLayout.Tab) {}
             })
         }
 
+        // Search filter
         svQuery.apply {
             setIconifiedByDefault(false)
             isIconified = false
@@ -159,6 +148,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             })
         }
 
+        // Address search triggers a fetch at that location
         svAddress.apply {
             setIconifiedByDefault(false)
             isIconified = false
@@ -180,11 +170,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         }
 
     private fun enableMyLocation() {
-        if (ContextCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
+        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             map.isMyLocationEnabled = true
         } else {
             locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
@@ -194,20 +180,23 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private fun searchMapLocation(query: String) {
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                val geocoder = Geocoder(requireContext())
-                val results = geocoder.getFromLocationName(query, 1)
+                val results = Geocoder(requireContext()).getFromLocationName(query, 1)
                 if (!results.isNullOrEmpty()) {
-                    val addr = results[0]
+                    val addr   = results[0]
                     val target = LatLng(addr.latitude, addr.longitude)
                     withContext(Dispatchers.Main) {
                         map.clear()
                         map.addMarker(MarkerOptions().position(target).title(query))
                         map.animateCamera(CameraUpdateFactory.newLatLngZoom(target, 13f))
+
+                        // Fetch once for this search
+                        currentLocation?.let { loc ->
+                            fetchNearbyRestaurants(target, loc)
+                        }
+                        showList()
                     }
                 }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+            } catch (e: Exception) { e.printStackTrace() }
         }
     }
 
@@ -219,7 +208,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             Place.Field.TYPES,
             Place.Field.PHOTO_METADATAS
         )
-        val circle = CircularBounds.newInstance(center, 1500.0)
+        val circle  = CircularBounds.newInstance(center, 1500.0)
         val request = SearchNearbyRequest.builder(circle, placeFields)
             .setIncludedPrimaryTypes(listOf("restaurant"))
             .setExcludedPrimaryTypes(listOf("lodging"))
@@ -229,24 +218,25 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         placesClient.searchNearby(request)
             .addOnSuccessListener { resp ->
                 val results = resp.places.map { p ->
-                    val photoMd = p.photoMetadatas?.firstOrNull()
-                    val raw = p.placeTypes?.firstOrNull()?.toString() ?: "unknown"
-                    val cuisine = raw
+                    val rawType = p.placeTypes?.firstOrNull()?.toString().orEmpty()
+                    val cuisine = rawType
                         .replace("_", " ")
                         .split(" ")
                         .joinToString(" ") { it.replaceFirstChar(Char::uppercaseChar) }
+
                     val rLoc = Location("").apply {
-                        latitude = p.latLng!!.latitude
+                        latitude  = p.latLng!!.latitude
                         longitude = p.latLng!!.longitude
                     }
                     val distKm = origin.distanceTo(rLoc) / 1000.0
+
                     Restaurant(
                         name          = p.name ?: "Unnamed",
                         cuisine       = cuisine,
                         rating        = p.rating ?: 0.0,
                         distance      = distKm,
                         latLng        = p.latLng!!,
-                        photoMetadata = photoMd
+                        photoMetadata = p.photoMetadatas?.firstOrNull()
                     )
                 }
                 updateUi(results)
@@ -258,44 +248,35 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         allRestaurants = restaurants
         restaurantAdapter.submitList(restaurants)
         map.clear()
-
         restaurants.forEach { r ->
-            val marker = map.addMarker(
-                MarkerOptions()
-                    .position(r.latLng)
-                    .title(r.name)
-            )
-            marker?.tag = r
+            map.addMarker(MarkerOptions().position(r.latLng).title(r.name))?.tag = r
         }
     }
-
 
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
         enableMyLocation()
 
+        // Grab the device's last location once
         fusedLocationClient.lastLocation
             .addOnSuccessListener { location ->
                 if (location != null) {
                     currentLocation = location
-                    // Use current location for initial fetch
-                    val currentLatLng = LatLng(location.latitude, location.longitude)
-                    map.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 14f))
-                    fetchNearbyRestaurants(currentLatLng, location)
+                    val currLatLng = LatLng(location.latitude, location.longitude)
+                    map.moveCamera(CameraUpdateFactory.newLatLngZoom(currLatLng, 14f))
+                    fetchNearbyRestaurants(currLatLng, location)
                     showList()
-
-                    // update on camera idle
-                    map.setOnCameraIdleListener {
-                        // Use the last known current location for subsequent fetches
-                        currentLocation?.let { loc ->
-                            fetchNearbyRestaurants(map.cameraPosition.target, loc)
-                        }
-                    }
                 }
             }
-        // Fallback or initial view before location is fetched
-        // val waterloo = LatLng(43.4723, -80.5449)
-        // map.moveCamera(CameraUpdateFactory.newLatLngZoom(waterloo, 14f))
+
+        // Always listen but only fetch if enabled
+        map.setOnCameraIdleListener {
+            if (fetchOnCameraMoveEnabled) {
+                currentLocation?.let { loc ->
+                    fetchNearbyRestaurants(map.cameraPosition.target, loc)
+                }
+            }
+        }
 
         map.setOnMarkerClickListener { marker ->
             (marker.tag as? Restaurant)?.let { showDetailSheet(it) }
@@ -303,28 +284,30 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         }
     }
 
+    // Call this from a demo toggle or button
+    fun toggleFreeExploreMode(enabled: Boolean) {
+        fetchOnCameraMoveEnabled = enabled
+    }
+
     private fun showList() {
         binding.googleMap.visibility = View.GONE
-        bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+        bottomSheetBehavior.state   = BottomSheetBehavior.STATE_EXPANDED
     }
 
     private fun showMap() {
         binding.googleMap.visibility = View.VISIBLE
-        bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+        bottomSheetBehavior.state   = BottomSheetBehavior.STATE_HIDDEN
     }
 
-
     private fun filterRestaurants(query: String?) {
-        val text = query.orEmpty().trim()
+        val text     = query.orEmpty().trim()
         val filtered = if (text.isEmpty()) allRestaurants
-        else allRestaurants.filter {
-            it.name.contains(text, ignoreCase = true)
-        }
+        else allRestaurants.filter { it.name.contains(text, ignoreCase = true) }
         restaurantAdapter.submitList(filtered)
     }
 
     private fun showDetailSheet(r: Restaurant) {
-        val dialog = BottomSheetDialog(requireContext())
+        val dialog    = BottomSheetDialog(requireContext())
         val sheetView = layoutInflater.inflate(R.layout.restaurant_details, null)
 
         val ivPhoto    = sheetView.findViewById<ImageView>(R.id.ivPhoto)
@@ -338,9 +321,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
         r.photoMetadata?.let { meta ->
             placesClient.fetchPhoto(FetchPhotoRequest.builder(meta).build())
-                .addOnSuccessListener { resp ->
-                    ivPhoto.setImageBitmap(resp.bitmap)
-                }
+                .addOnSuccessListener { resp -> ivPhoto.setImageBitmap(resp.bitmap) }
         }
 
         dialog.setContentView(sheetView)
