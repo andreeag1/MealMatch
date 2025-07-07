@@ -88,6 +88,8 @@ class AuthActivity : AppCompatActivity() {
                 is ApiResult.Success -> {
                     Toast.makeText(this, "Success!", Toast.LENGTH_SHORT).show()
                     TokenManager.saveToken(this, result.data.token)
+                    val prefs = getSharedPreferences("app_prefs", MODE_PRIVATE)
+                    prefs.edit().putString("username", result.data.username).apply()
                     goToMainApp()
                 }
                 is ApiResult.Error -> {

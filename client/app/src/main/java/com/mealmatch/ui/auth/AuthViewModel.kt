@@ -26,7 +26,7 @@ class AuthViewModel : ViewModel() {
                 if (response.isSuccessful) {
                     val apiResponse = response.body()
                     if (apiResponse != null && apiResponse.success && apiResponse.data?.token != null) {
-                        _authResult.value = ApiResult.Success(AuthResponse(apiResponse.data.token))
+                        _authResult.value = ApiResult.Success(AuthResponse(apiResponse.data.token, apiResponse.data.username))
                     } else {
                         _authResult.value = ApiResult.Error(apiResponse?.message ?: "Login failed")
                     }
@@ -47,7 +47,7 @@ class AuthViewModel : ViewModel() {
                 if (response.isSuccessful) {
                     val apiResponse = response.body()
                     if (apiResponse != null && apiResponse.success && apiResponse.token != null) {
-                        _authResult.value = ApiResult.Success(AuthResponse(apiResponse.token))
+                        _authResult.value = ApiResult.Success(AuthResponse(apiResponse.token, username))
                     } else {
                         _authResult.value = ApiResult.Error(apiResponse?.message ?: "Sign up failed")
                     }
