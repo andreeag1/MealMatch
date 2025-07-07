@@ -15,6 +15,8 @@
     <string name="next">Next</string>
     <string name="previous">Previous</string>
     <string name="home_page_description">Home feed content</string>
+    <string name="write_post">How was your dining experience?</string>
+    <string name="create_post">Post!</string>
 
     <string name="lorem_ipsum">
         Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam in scelerisque sem. Mauris
