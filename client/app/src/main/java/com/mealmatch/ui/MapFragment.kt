@@ -1,6 +1,7 @@
 package com.mealmatch.ui
 
-import android.content.Context
+
+import com.mealmatch.BuildConfig
 import android.location.Geocoder
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -9,7 +10,6 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.RatingBar
-import android.view.inputmethod.InputMethodManager
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
@@ -57,6 +57,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private lateinit var map: GoogleMap
     private lateinit var bottomSheetBehavior: BottomSheetBehavior<LinearLayout>
     private lateinit var restaurantAdapter: RestaurantAdapter
+    val mapsApiKey = BuildConfig.MAPS_API_KEY
 
     private lateinit var tabLayout: TabLayout
     private lateinit var svQuery: SearchView
@@ -77,10 +78,14 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (!Places.isInitialized()) Places.initialize(requireContext(), getString(R.string.google_maps_key))
-        placesClient = Places.createClient(requireContext())
+
+        if (!Places.isInitialized()) {
+            Places.initialize(requireContext(), mapsApiKey)
+        }
+        placesClient        = Places.createClient(requireContext())
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
     }
+
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentMapBinding.inflate(inflater, container, false)
