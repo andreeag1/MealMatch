@@ -8,8 +8,8 @@ import retrofit2.Response
 class ProfilePrefRepository {
     private val profilePrefApiService = ApiClient.profilePrefApiService
 
-    suspend fun createProfilePref(token: String, request: UserProfileMessage): Response<ApiResponse<Unit>> {
-        return profilePrefApiService.createProfilePref(token, request)
+    suspend fun setProfilePref(token: String, request: UserProfileMessage): Response<ApiResponse<Unit>> {
+        return profilePrefApiService.setProfilePref(token, request)
     }
 
     suspend fun getProfilePref(token: String): Response<ApiResponse<UserProfileMessage>> {
