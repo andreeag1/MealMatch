@@ -1,18 +1,22 @@
-package com.mealmatch.data.network.repository
+package com.mealmatch.data.network.service
 
 import com.mealmatch.data.model.ApiResponse
 import com.mealmatch.data.model.UserProfileMessage
-import com.mealmatch.data.network.ApiClient
 import retrofit2.Response
+import retrofit2.http.Body
+import retrofit2.http.GET
+import retrofit2.http.Header
+import retrofit2.http.POST
 
-class ProfilePrefApiService {
-    private val profilePrefApiService = ApiClient.profilePrefApiService
+interface ProfilePrefApiService {
+    @POST("api/user_profiles")
+    suspend fun setProfilePref(
+        @Header("Authorization") token: String,
+        @Body request: UserProfileMessage
+    ): Response<ApiResponse<Unit>>
 
-    suspend fun createProfilePref(token: String, request: UserProfileMessage): Response<ApiResponse<Unit>> {
-        return profilePrefApiService.createProfilePref(token, request)
-    }
-
-    suspend fun getProfilePref(token: String): Response<ApiResponse<UserProfileMessage>> {
-        return profilePrefApiService.getProfilePref(token)
-    }
+    @GET("api/user_profiles")
+    suspend fun getProfilePref(
+        @Header("Authorization") token: String
+    ): Response<ApiResponse<UserProfileMessage>>
 }

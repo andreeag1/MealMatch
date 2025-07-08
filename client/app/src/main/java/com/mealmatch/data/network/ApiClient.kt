@@ -1,9 +1,9 @@
 package com.mealmatch.data.network
 
 
-import com.mealmatch.data.network.repository.ProfilePrefApiService
 import com.mealmatch.data.network.service.AuthApiService
 import com.mealmatch.data.network.service.GroupApiService
+import com.mealmatch.data.network.service.ProfilePrefApiService
 import com.mealmatch.data.network.service.SessionApiService
 import com.mealmatch.data.network.service.PostApiService
 import okhttp3.OkHttpClient
