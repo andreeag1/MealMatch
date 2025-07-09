@@ -8,7 +8,7 @@ import morgan from "morgan";
 import apiRoutes from "./api/routes/index.js";
 import connectDB from "./config/database.js";
 import setupWebSocket from "./api/websocket/websocket.js";
-
+import friendsRoutes from './api/routes/friendsRoute.js';
 connectDB();
 
 const app = express();

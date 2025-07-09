@@ -24,6 +24,7 @@ const userSchema = new Schema({
     minlength: [6, "Password must be at least 6 characters long"],
     select: false,
   },
+  friends: [{ type: Schema.Types.ObjectId, ref: "User" }],
 });
 
 // Mongoose middleware to hash password before saving

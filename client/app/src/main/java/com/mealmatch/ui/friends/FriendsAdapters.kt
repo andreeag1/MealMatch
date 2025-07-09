@@ -8,74 +8,73 @@ import android.widget.TextView
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import com.mealmatch.R
+import com.mealmatch.data.model.FriendModel as Friend
 
-class FriendsAdapters(private val friends: List<Friend>) : RecyclerView.Adapter<FriendsAdapters.ViewHolder>() {
+class FriendsAdapter(
+    private var friends: List<Friend>,
+    private val allowSelection: Boolean = false,
+    private val allowRemoval: Boolean = false,
+    private val onRemoveClick: ((Friend) -> Unit)? = null
+) : RecyclerView.Adapter<FriendsAdapter.ViewHolder>() {
 
     private val selectedFriendIds = mutableSetOf<String>()
 
-    fun getSelectedFriends(): List<Friend> {
-        return friends.filter { it.id in selectedFriendIds }
-    }
+    fun getSelectedFriends(): List<Friend> =
+        friends.filter { it._id in selectedFriendIds }
 
     fun clearSelection() {
         selectedFriendIds.clear()
         notifyDataSetChanged()
     }
 
+    fun updateFriends(newFriends: List<Friend>) {
+        friends = newFriends
+        selectedFriendIds.retainAll(newFriends.map { it._id })
+        notifyDataSetChanged()
+    }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_friend_selectable, parent, false)
+        val view = LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_friend, parent, false)
         return ViewHolder(view)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val friend = friends[position]
-        holder.bind(friend, selectedFriendIds.contains(friend.id))
+        val isSelected = selectedFriendIds.contains(friend._id)
+        holder.bind(friend, isSelected, allowSelection, allowRemoval, onRemoveClick)
         holder.itemView.setOnClickListener {
-            if (selectedFriendIds.contains(friend.id)) {
-                selectedFriendIds.remove(friend.id)
-            } else {
-                selectedFriendIds.add(friend.id)
+            if (allowSelection) {
+                if (isSelected) selectedFriendIds.remove(friend._id)
+                else selectedFriendIds.add(friend._id)
+                notifyItemChanged(position)
             }
-            notifyItemChanged(position)
         }
     }
 
-    override fun getItemCount() = friends.size
+    override fun getItemCount(): Int = friends.size
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val avatar: ImageView = itemView.findViewById(R.id.friendAvatar)
         private val name: TextView = itemView.findViewById(R.id.friendName)
         private val checkIcon: ImageView = itemView.findViewById(R.id.checkIcon)
+        private val removeIcon: ImageView = itemView.findViewById(R.id.removeIcon)
 
-        fun bind(friend: Friend, isSelected: Boolean) {
-            name.text = friend.name
+        fun bind(
+            friend: Friend,
+            isSelected: Boolean,
+            allowSelection: Boolean,
+            allowRemoval: Boolean,
+            onRemoveClick: ((Friend) -> Unit)?
+        ) {
+            name.text = friend.username
             avatar.setImageResource(R.drawable.friends)
-            checkIcon.isVisible = isSelected
-            itemView.isActivated = isSelected
-        }
-    }
-}
+            checkIcon.isVisible = allowSelection && isSelected
+            removeIcon.isVisible = allowRemoval
 
-class FriendsListAdapter(private val friends: List<Friend>) : RecyclerView.Adapter<FriendsListAdapter.ViewHolder>() {
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_friend_selectable, parent, false)
-        return ViewHolder(view)
-    }
-
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(friends[position])
-    }
-
-    override fun getItemCount() = friends.size
-
-    class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val avatar: ImageView = itemView.findViewById(R.id.friendAvatar)
-        private val name: TextView = itemView.findViewById(R.id.friendName)
-
-        fun bind(friend: Friend) {
-            name.text = friend.name
-            avatar.setImageResource(R.drawable.friends)
+            removeIcon.setOnClickListener {
+                onRemoveClick?.invoke(friend)
+            }
         }
     }
 }
