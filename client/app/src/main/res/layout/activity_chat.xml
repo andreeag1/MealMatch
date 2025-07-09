@@ -26,29 +26,50 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:padding="16dp"
+        android:baselineAligned="false"
         app:layout_constraintTop_toBottomOf="@id/toolbar"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
         <Button
+            android:id="@+id/buttonViewActiveSessions"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:minHeight="60dp"
+            android:layout_weight="1"
+            android:text="Active Sessions"
+            android:background="@drawable/bg_button_purple"
+            android:textColor="@android:color/white"
+            android:textSize="12sp"
+            android:layout_marginEnd="8dp"
+            android:textAllCaps="false"/>
+
+        <Button
             android:id="@+id/buttonStartMatch"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:minHeight="60dp"
             android:layout_weight="1"
-            android:text="Start New Match Session"
-            android:background="@drawable/bg_button_green"
+            android:text="Start New Match"
+            android:background="@drawable/bg_button_purple"
             android:textColor="@android:color/white"
-            android:layout_marginEnd="8dp"/>
+            android:textSize="12sp"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
+            android:textAllCaps="false"/>
 
         <Button
             android:id="@+id/buttonLeaderboard"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:minHeight="60dp"
             android:layout_weight="1"
-            android:text="View Group Leaderboard"
-            android:background="@drawable/bg_button_orange"
+            android:text="Leaderboard"
+            android:background="@drawable/bg_button_purple"
             android:textColor="@android:color/white"
-            android:layout_marginStart="8dp"/>
+            android:textSize="12sp"
+            android:layout_marginStart="4dp"
+            android:textAllCaps="false"/>
     </LinearLayout>
 
     <View

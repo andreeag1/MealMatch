@@ -35,4 +35,10 @@ interface SessionApiService {
         @Header("Authorization") token: String,
         @Path("sessionId") sessionId: String
     ): Response<ApiResponse<MatchResultResponse>>
+
+    @GET("api/sessions/group/{groupId}/active")
+    suspend fun getActiveSessions(
+        @Header("Authorization") token: String,
+        @Path("groupId") groupId: String
+    ): Response<ApiResponse<List<MatchSessionResponse>>>
 }

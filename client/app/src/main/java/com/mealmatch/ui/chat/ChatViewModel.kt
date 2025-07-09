@@ -33,6 +33,8 @@ class ChatViewModel : ViewModel() {
     private val _createSessionResult = MutableLiveData<ApiResult<MatchSessionResponse>>()
     val createSessionResult: LiveData<ApiResult<MatchSessionResponse>> = _createSessionResult
 
+    private val _activeSessionsResult = MutableLiveData<ApiResult<List<MatchSessionResponse>>>()
+    val activeSessionsResult: LiveData<ApiResult<List<MatchSessionResponse>>> = _activeSessionsResult
 
     init {
         webSocketClient.setListener(object : WebSocketClient.AppWebSocketListener() {
@@ -55,6 +57,27 @@ class ChatViewModel : ViewModel() {
                 }
             } catch (e: Exception) {
                 _messages.value = ApiResult.Error(e.message ?: "Network request failed")
+            }
+        }
+    }
+
+    fun fetchActiveSessions(token: String, groupId: String) {
+        _activeSessionsResult.value = ApiResult.Loading
+        viewModelScope.launch {
+            try {
+                val response = sessionRepository.getActiveSessions(token, groupId)
+                if (response.isSuccessful && response.body()?.success == true) {
+                    val sessions = response.body()?.data
+                    if (sessions != null) {
+                        _activeSessionsResult.value = ApiResult.Success(sessions)
+                    } else {
+                        _activeSessionsResult.value = ApiResult.Error("Response did not contain session data.")
+                    }
+                } else {
+                    _activeSessionsResult.value = ApiResult.Error(response.body()?.message ?: "Failed to fetch active sessions")
+                }
+            } catch (e: Exception) {
+                _activeSessionsResult.value = ApiResult.Error(e.message ?: "Network request failed")
             }
         }
     }
