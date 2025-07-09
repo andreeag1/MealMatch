@@ -11,6 +11,7 @@ import com.mealmatch.data.model.RegisterRequest
 import com.mealmatch.data.network.repository.AuthRepository
 import com.mealmatch.ui.friends.ApiResult
 import kotlinx.coroutines.launch
+import com.mealmatch.data.model.UserViewModel
 
 class AuthViewModel : ViewModel() {
     private val authRepository = AuthRepository()
@@ -23,10 +24,13 @@ class AuthViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val response = authRepository.login(LoginRequest(email, password))
+
                 if (response.isSuccessful) {
+                    UserViewModel.email = email
+
                     val apiResponse = response.body()
                     if (apiResponse != null && apiResponse.success && apiResponse.data?.token != null) {
-                        _authResult.value = ApiResult.Success(AuthResponse(apiResponse.data.token))
+                        _authResult.value = ApiResult.Success(AuthResponse(apiResponse.data.token, apiResponse.data.username))
                     } else {
                         _authResult.value = ApiResult.Error(apiResponse?.message ?: "Login failed")
                     }
@@ -45,9 +49,12 @@ class AuthViewModel : ViewModel() {
             try {
                 val response = authRepository.register(RegisterRequest(username, email, password))
                 if (response.isSuccessful) {
+                    UserViewModel.username = username
+                    UserViewModel.email = email
+
                     val apiResponse = response.body()
                     if (apiResponse != null && apiResponse.success && apiResponse.token != null) {
-                        _authResult.value = ApiResult.Success(AuthResponse(apiResponse.token))
+                        _authResult.value = ApiResult.Success(AuthResponse(apiResponse.token, username))
                     } else {
                         _authResult.value = ApiResult.Error(apiResponse?.message ?: "Sign up failed")
                     }

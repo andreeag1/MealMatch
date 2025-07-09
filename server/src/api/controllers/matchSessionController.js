@@ -144,3 +144,40 @@ export const createSoloMatchSession = async (req, res) => {
     });
   }
 };
+
+/**
+ * @desc Get the result of a match session
+ * @route GET /api/sessions/result/:sessionId
+ */
+export const getSessionResult = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+
+    const session = await MatchSession.findById(sessionId).populate("group");
+    if (!session) {
+      return response(res, "Session not found", 404, false);
+    }
+
+    if (session.status !== "completed") {
+      return response(
+        res,
+        "Session is still active. Not all members have voted.",
+        202,
+        true,
+        { status: session.status }
+      );
+    }
+
+    return response(
+      res,
+      "Session result fetched successfully",
+      200,
+      true,
+      session.result
+    );
+  } catch (error) {
+    return response(res, "Internal server error", 500, false, {
+      error: error.message,
+    });
+  }
+};
