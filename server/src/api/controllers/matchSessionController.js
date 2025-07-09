@@ -181,3 +181,31 @@ export const getSessionResult = async (req, res) => {
     });
   }
 };
+
+/**
+ * @desc Get all active match sessions for a specific group
+ * @route GET /api/sessions/group/:groupId/active
+ */
+export const getActiveSessions = async (req, res) => {
+  try {
+    const { groupId } = req.params;
+
+    // Find all sessions for this group that are still active
+    const activeSessions = await MatchSession.find({
+      group: groupId,
+      status: "active",
+    }).sort({ createdAt: -1 }); // Show newest sessions first
+
+    return response(
+      res,
+      "Active sessions fetched successfully",
+      200,
+      true,
+      activeSessions
+    );
+  } catch (error) {
+    return response(res, "Internal server error", 500, false, {
+      error: error.message,
+    });
+  }
+};

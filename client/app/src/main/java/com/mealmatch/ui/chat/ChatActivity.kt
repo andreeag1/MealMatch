@@ -6,9 +6,11 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.auth0.android.jwt.JWT
 import com.mealmatch.data.local.TokenManager
+import com.mealmatch.data.model.MatchSessionResponse
 import com.mealmatch.data.model.MessageResponse
 import com.mealmatch.data.model.UserInfo
 import com.mealmatch.databinding.ActivityChatBinding
@@ -61,6 +63,7 @@ class ChatActivity : AppCompatActivity() {
         observeViewModel()
 
         viewModel.fetchMessages("Bearer $token", groupId!!)
+        viewModel.fetchActiveSessions("Bearer $token", groupId!!)
     }
 
     override fun onStart() {
@@ -113,6 +116,37 @@ class ChatActivity : AppCompatActivity() {
             // TODO: Handle leaderboard click
             Toast.makeText(this, "Leaderboard clicked", Toast.LENGTH_SHORT).show()
         }
+
+        binding.buttonViewActiveSessions.setOnClickListener {
+            viewModel.activeSessionsResult.value?.let { result ->
+                if (result is ApiResult.Success) {
+                    showActiveSessionsDialog(result.data)
+                } else {
+                    Toast.makeText(this, "No active sessions found or still loading.", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private fun showActiveSessionsDialog(sessions: List<MatchSessionResponse>) {
+        if (sessions.isEmpty()) {
+            Toast.makeText(this, "There are no active sessions to join.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val sessionNames = sessions.map { "Session started at ${it.createdAt}" }.toTypedArray()
+
+        AlertDialog.Builder(this)
+            .setTitle("Join an Active Session")
+            .setItems(sessionNames) { dialog, which ->
+                val selectedSession = sessions[which]
+                val intent = Intent(this, MatchActivity::class.java).apply {
+                    putExtra("SESSION_ID", selectedSession._id)
+                }
+                startActivity(intent)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun observeViewModel() {
