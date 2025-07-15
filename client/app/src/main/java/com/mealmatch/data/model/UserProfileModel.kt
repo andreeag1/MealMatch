@@ -1,4 +1,5 @@
 package com.mealmatch.data.model
+import android.media.session.MediaSession.Token
 
 data class UserPreferenceMessage(
     val cuisine: String,
@@ -9,7 +10,7 @@ data class UserPreferenceMessage(
 )
 
 data class UserProfileMessage(
-    val userId: String,
+    val userID: String,
     val username: String,
     val email: String,
     val userPreferenceMessage: UserPreferenceMessage,

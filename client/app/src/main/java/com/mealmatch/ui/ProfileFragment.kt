@@ -98,25 +98,40 @@ class ProfileFragment : Fragment() {
         val dialogView = LayoutInflater.from(requireContext())
             .inflate(R.layout.edit_preferences_popup, null)
 
-        val inputCuisine = dialogView.findViewById<EditText>(R.id.inputCuisine)
-        val inputDietary = dialogView.findViewById<EditText>(R.id.inputDietary)
-        val inputAmbiance = dialogView.findViewById<EditText>(R.id.inputAmbiance)
+        val inputCuisine = dialogView.findViewById<Spinner>(R.id.inputCuisine)
+        val inputDietary = dialogView.findViewById<Spinner>(R.id.inputDietary)
+        val inputAmbiance = dialogView.findViewById<Spinner>(R.id.inputAmbiance)
         val spinner = dialogView.findViewById<Spinner>(R.id.inputBudget)
 
+        val cuisineOptions = arrayOf("Select a cuisine", "Chinese", "Japanese", "Korean", "Thai", "Indian", "Italian", "French", "Mexican", "Middle Eastern", "American")
+        val dietaryOptions = arrayOf("Select a dietary preference", "Vegetarian", "Vegan", "Gluten-Free", "Pescatarian", "Halal", "Kosher", "Dairy-Free", "Nut-Free")
+        val ambianceOptions = arrayOf("Select an ambiance", "Casual", "Cozy", "Romantic", "Trendy", "Family-Friendly", "Upscale", "Outdoor Seating", "Lively", "Quiet")
         val inputBudgetOptions = arrayOf("Select a budget", "$", "$$", "$$$", "$$$$")
-        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, inputBudgetOptions)
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinner.adapter = adapter
-        spinner.setSelection(0)
+
+        fun setupSpinner(spinner: Spinner, options: Array<String>) {
+            val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, options)
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            spinner.adapter = adapter
+            spinner.setSelection(0)
+        }
+
+        setupSpinner(inputCuisine, cuisineOptions)
+        setupSpinner(inputDietary, dietaryOptions)
+        setupSpinner(inputAmbiance, ambianceOptions)
+        setupSpinner(spinner, inputBudgetOptions)
 
         AlertDialog.Builder(requireContext())
             .setTitle(title)
             .setView(dialogView)
             .setPositiveButton("Save") { dialog, _ ->
-                val cuisine = inputCuisine.text.toString()
-                val dietary = inputDietary.text.toString()
-                val ambiance = inputAmbiance.text.toString()
+                val cuisine = inputCuisine.selectedItem.toString()
+                val dietary = inputDietary.selectedItem.toString()
+                val ambiance = inputAmbiance.selectedItem.toString()
                 val budget = spinner.selectedItem.toString()
+
+                // send to backend
+                sendPreferencesToBackend()
+
                 onSave(cuisine, dietary, ambiance, budget)
                 dialog.dismiss()
             }
@@ -145,6 +160,8 @@ class ProfileFragment : Fragment() {
             return
         }
 
+        val authHeader = "Bearer $token"
+
         val preferences = UserPreferenceMessage(
             cuisine = userSettings.cuisines.orEmpty(),
             dietary = userSettings.dietary.orEmpty(),
@@ -153,7 +170,7 @@ class ProfileFragment : Fragment() {
         )
 
         val userProfile = UserProfileMessage(
-            userId = token,
+            userID = token,
             username = userSettings.username,
             email = userSettings.email,
             userPreferenceMessage = preferences
@@ -162,7 +179,7 @@ class ProfileFragment : Fragment() {
         lifecycleScope.launch {
             try {
                 Log.i("ProfileFragment", "Sending preferences: $userProfile")
-                profilePrefRepository.setProfilePref(token, userProfile)
+                profilePrefRepository.setProfilePref(authHeader, userProfile) // ✅ FIXED
             } catch (e: Exception) {
                 Log.e("ProfileFragment", "Failed to save profile", e)
             }
@@ -175,9 +192,11 @@ class ProfileFragment : Fragment() {
             return
         }
 
+        val authHeader = "Bearer $token"
+
         lifecycleScope.launch {
             try {
-                val response = profilePrefRepository.getProfilePref(token)
+                val response = profilePrefRepository.getProfilePref(authHeader) 
                 if (response.isSuccessful) {
                     val prefs = response.body()?.data?.userPreferenceMessage
 
@@ -197,7 +216,7 @@ class ProfileFragment : Fragment() {
                     }
 
                 } else {
-                    Log.e("ProfileFragment", "Profile fetch unsuccessful")
+                    Log.e("ProfileFragment", "Profile fetch unsuccessful: ${response.code()}")
                 }
             } catch (e: Exception) {
                 Log.e("ProfileFragment", "Failed to fetch profile", e)
