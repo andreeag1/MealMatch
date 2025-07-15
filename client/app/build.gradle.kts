@@ -13,6 +13,10 @@ val localProps = Properties().apply {
     }
 }
 val mapsApiKey: String = localProps.getProperty("GOOGLE_MAPS_API_KEY") ?: ""
+val debugStorePassword = localProps.getProperty("DEBUG_STORE_PASSWORD")
+val debugKeyAlias = localProps.getProperty("DEBUG_KEY_ALIAS")
+val debugKeyPassword = localProps.getProperty("DEBUG_KEY_PASSWORD")
+
 
 android {
     namespace = "com.mealmatch"
@@ -31,7 +35,23 @@ android {
         buildConfigField("String", "MAPS_API_KEY", "\"$mapsApiKey\"")
     }
 
+    signingConfigs {
+        getByName("debug").apply {
+            storeFile = file("../keystore/shared-debug.keystore")
+            storePassword = debugStorePassword
+            keyAlias = debugKeyAlias
+            keyPassword = debugKeyPassword
+        }
+    }
+
     buildTypes {
+        debug {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+            signingConfig = signingConfigs.getByName("debug")
+            isDebuggable = true
+        }
+
         release {
             isMinifyEnabled = false
             proguardFiles(

@@ -25,4 +25,8 @@ class SessionRepository {
     suspend fun getSessionResult(token: String, sessionId: String): Response<ApiResponse<MatchResultResponse>> {
         return sessionApiService.getSessionResult(token, sessionId)
     }
+
+    suspend fun getActiveSessions(token: String, groupId: String): Response<ApiResponse<List<MatchSessionResponse>>> {
+        return sessionApiService.getActiveSessions(token, groupId)
+    }
 }

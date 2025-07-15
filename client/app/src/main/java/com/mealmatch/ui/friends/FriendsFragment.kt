@@ -16,10 +16,7 @@ import android.widget.Button
 import com.mealmatch.R
 import com.mealmatch.data.local.TokenManager
 import com.mealmatch.ui.chat.ChatActivity
-
-data class Friend(val id: String, val name: String, val avatarUrl: String)
-data class GroupChat(val id: String, val name: String, val members: List<Friend>)
-
+import com.mealmatch.data.model.FriendModel as Friend
 
 class FriendsFragment : Fragment() {
     private var _binding: FragmentFriendsBinding? = null
@@ -27,16 +24,9 @@ class FriendsFragment : Fragment() {
 
     private val viewModel: FriendsViewModel by viewModels()
 
-    private val initialFriends = listOf(
-        Friend("1", "Bob", "https://placehold.co/80x80/FFD700/FFFFFF?text=AP"),
-        Friend("2", "Rob", "https://placehold.co/80x80/ADD8E6/000080?text=JL"),
-        Friend("3", "Dude", "https://placehold.co/80x80/90EE90/006400?text=CK")
-    )
-
-    // Adapters for the RecyclerViews
-    private lateinit var selectableFriendsAdapter: FriendsAdapters
     private lateinit var groupChatsAdapter: GroupChatsAdapter
-    private lateinit var friendsListAdapter: FriendsListAdapter
+    private lateinit var groupCreationFriendsAdapter: FriendsAdapter
+    private lateinit var friendsListAdapter: FriendsAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -51,26 +41,30 @@ class FriendsFragment : Fragment() {
         setupRecyclerViews(view)
         setupClickListeners(view)
         observeViewModel()
-        fetchGroups()
+        fetchFriendsAndGroups()
     }
 
-    private fun fetchGroups() {
+    private fun fetchFriendsAndGroups() {
         val token = TokenManager.getToken(requireContext())
         if (token != null) {
-            viewModel.getUserGroups("Bearer $token")
+            val authToken = "Bearer $token"
+            viewModel.getUserGroups(authToken)
+            viewModel.fetchFriends(authToken)
         } else {
             Toast.makeText(context, "Not authenticated. Please log in.", Toast.LENGTH_LONG).show()
         }
     }
 
     private fun setupRecyclerViews(view: View) {
-        // View for showing friends when creating a group
         val rvSelectableFriends = view.findViewById<RecyclerView>(R.id.recyclerViewAddFriends)
-        selectableFriendsAdapter = FriendsAdapters(initialFriends)
+        groupCreationFriendsAdapter = FriendsAdapter(
+            friends = listOf(),
+            allowSelection = true,
+            allowRemoval = false
+        )
         rvSelectableFriends.layoutManager = LinearLayoutManager(context)
-        rvSelectableFriends.adapter = selectableFriendsAdapter
+        rvSelectableFriends.adapter = groupCreationFriendsAdapter
 
-        // View that shows current groups
         val rvGroupChats = view.findViewById<RecyclerView>(R.id.recyclerViewGroupChats)
         groupChatsAdapter = GroupChatsAdapter(mutableListOf()) { groupChat ->
             val intent = ChatActivity.newIntent(requireContext(), groupChat.id, groupChat.name)
@@ -79,9 +73,15 @@ class FriendsFragment : Fragment() {
         rvGroupChats.layoutManager = LinearLayoutManager(context)
         rvGroupChats.adapter = groupChatsAdapter
 
-        // View that shows friend list
         val rvFriendsList = view.findViewById<RecyclerView>(R.id.recyclerViewFriendsList)
-        friendsListAdapter = FriendsListAdapter(initialFriends)
+        friendsListAdapter = FriendsAdapter(
+            friends = listOf(),
+            allowSelection = false,
+            allowRemoval = true
+        ) { friend ->
+            val token = TokenManager.getToken(requireContext()) ?: return@FriendsAdapter
+            viewModel.removeFriend("Bearer $token", friend.username)
+        }
         rvFriendsList.layoutManager = LinearLayoutManager(context)
         rvFriendsList.adapter = friendsListAdapter
     }
@@ -92,7 +92,7 @@ class FriendsFragment : Fragment() {
 
         createGroupButton.setOnClickListener {
             val groupName = groupNameEditText.text.toString().trim()
-            val selectedFriends = selectableFriendsAdapter.getSelectedFriends()
+            val selectedFriends = groupCreationFriendsAdapter.getSelectedFriends()
 
             if (groupName.isEmpty()) {
                 groupNameEditText.error = "Group name cannot be empty"
@@ -103,7 +103,7 @@ class FriendsFragment : Fragment() {
                 return@setOnClickListener
             }
 
-            val memberUsernames = selectedFriends.map { it.name }
+            val memberUsernames = selectedFriends.map { it.username }
             val token = TokenManager.getToken(requireContext())
 
             if (token == null) {
@@ -112,9 +112,25 @@ class FriendsFragment : Fragment() {
             }
 
             val authToken = "Bearer $token"
-
             viewModel.createGroup(authToken, groupName, memberUsernames)
         }
+
+        val addFriendButton = view.findViewById<Button>(R.id.buttonAddFriend)
+        val friendUsernameInput = view.findViewById<TextInputEditText>(R.id.editTextAddFriend)
+
+        addFriendButton.setOnClickListener {
+            val username = friendUsernameInput.text.toString().trim()
+            val token = TokenManager.getToken(requireContext())
+
+            if (username.isNotEmpty() && token != null) {
+                viewModel.addFriend("Bearer $token", username)
+                friendUsernameInput.text?.clear()
+                Toast.makeText(context, "Adding $username...", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(context, "Please enter a username", Toast.LENGTH_SHORT).show()
+            }
+        }
+
     }
 
     private fun observeViewModel() {
@@ -124,8 +140,8 @@ class FriendsFragment : Fragment() {
                 is ApiResult.Success -> {
                     Toast.makeText(context, "Group created successfully!", Toast.LENGTH_LONG).show()
                     binding.editTextGroupName.text = null
-                    selectableFriendsAdapter.clearSelection()
-                    fetchGroups()
+                    groupCreationFriendsAdapter.clearSelection()
+                    fetchFriendsAndGroups()
                 }
                 is ApiResult.Error -> Toast.makeText(context, "Error: ${result.message}", Toast.LENGTH_LONG).show()
             }
@@ -133,11 +149,11 @@ class FriendsFragment : Fragment() {
 
         viewModel.userGroupsResult.observe(viewLifecycleOwner) { result ->
             when (result) {
-                is ApiResult.Loading -> { }
+                is ApiResult.Loading -> {}
                 is ApiResult.Success -> {
                     val groupChatsForUi = result.data.map { groupResponse ->
                         val membersForUi = groupResponse.members.map { member ->
-                            Friend(id = member._id, name = member.username, avatarUrl = "")
+                            Friend(_id = member._id, username = member.username, email = null)
                         }
                         GroupChat(id = groupResponse._id, name = groupResponse.name, members = membersForUi)
                     }
@@ -146,11 +162,26 @@ class FriendsFragment : Fragment() {
                 is ApiResult.Error -> Toast.makeText(context, "Error fetching groups: ${result.message}", Toast.LENGTH_LONG).show()
             }
         }
-    }
 
+        viewModel.friends.observe(viewLifecycleOwner) { result ->
+            when (result) {
+                is ApiResult.Loading -> {}
+                is ApiResult.Success -> {
+                    friendsListAdapter.updateFriends(result.data)
+                    groupCreationFriendsAdapter.updateFriends(result.data)
+                }
+                is ApiResult.Error -> {
+                    Toast.makeText(context, "Failed to fetch friends: ${result.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
     }
 }
+
+data class GroupChat(val id: String, val name: String, val members: List<Friend>)
+

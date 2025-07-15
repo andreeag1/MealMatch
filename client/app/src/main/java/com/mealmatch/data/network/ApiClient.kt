@@ -5,7 +5,11 @@ import com.mealmatch.data.network.service.AuthApiService
 import com.mealmatch.data.network.service.GroupApiService
 import com.mealmatch.data.network.service.ProfilePrefApiService
 import com.mealmatch.data.network.service.SessionApiService
+
+import com.mealmatch.data.network.service.FriendApiService
+
 import com.mealmatch.data.network.service.PostApiService
+
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -48,6 +52,11 @@ object ApiClient {
 
     val sessionApiService: SessionApiService by lazy {
         retrofit.create(SessionApiService::class.java)
+    }
+
+
+    val friendApiService: FriendApiService by lazy {
+        retrofit.create(FriendApiService::class.java)
     }
 
     val postApiService: PostApiService by lazy {
