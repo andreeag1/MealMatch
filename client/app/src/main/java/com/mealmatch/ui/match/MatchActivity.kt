@@ -18,23 +18,22 @@ import androidx.core.view.setPadding
 import com.mealmatch.R
 import com.mealmatch.data.local.TokenManager
 import com.mealmatch.data.model.Swipe
+import com.mealmatch.data.model.Restaurant
 import com.mealmatch.databinding.ActivityMatchBinding
 import com.mealmatch.ui.friends.ApiResult
-import com.mealmatch.ui.match.MatchViewModel
 import kotlin.math.abs
-
-data class Restaurant(val id: String, val name: String, val description: String, val imageId: Int)
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
+import android.location.Location
 
 class MatchActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMatchBinding
     private val viewModel: MatchViewModel by viewModels()
 
-    private val restaurants = listOf(
-        Restaurant("restaurant_id_1", "ABC Sushi", "Premier Sushi and Sashimi.", R.drawable.sushi),
-        Restaurant("restaurant_id_2", "DEF Burgers", "Delicious gourmet burgers and hand cut fries!", R.drawable.burgers),
-        Restaurant("restaurant_id_3", "GHI Pasta", "Authentic Italian Cuisine.", R.drawable.pasta),
-        Restaurant("restaurant_id_4", "JKL Tacos", "Fine Tacos and Burritos made fresh just for you!", R.drawable.tacos)
-        )
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private var restaurants: List<Restaurant> = emptyList()
     
     private var sessionId: String? = null
     private var currIndex = 0
@@ -45,24 +44,43 @@ class MatchActivity : AppCompatActivity() {
         binding = ActivityMatchBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        sessionId = intent.getStringExtra("SESSION_ID")
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
-        if (sessionId == null) {
-            Toast.makeText(this, "Error: Session ID missing.", Toast.LENGTH_LONG).show()
-            finish()
-            return
+        sessionId = intent.getStringExtra("SESSION_ID")
+        val userLat = intent.getDoubleExtra("USER_LAT", Double.NaN)
+        val userLng = intent.getDoubleExtra("USER_LNG", Double.NaN)
+        var usedLocation: Location? = null
+        if (!userLat.isNaN() && !userLng.isNaN()) {
+            usedLocation = Location("").apply {
+                latitude = userLat
+                longitude = userLng
+            }
         }
 
+        if (sessionId == null) {
+            startNewSoloSession()
+        }
+        if (usedLocation != null) {
+            viewModel.fetchNearbyRestaurants(usedLocation)
+        } else {
+            fetchLocationAndRestaurants()
+        }
         setupToolbar()
         setupButtons()
         observeViewModel()
+    }
 
-        if (sessionId == null) {
-            // if no session ID was passed, it's a solo session created from match page
-            startNewSoloSession()
+    private fun fetchLocationAndRestaurants() {
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                if (location != null) {
+                    viewModel.fetchNearbyRestaurants(location)
+                } else {
+                    Toast.makeText(this, "Could not get location", Toast.LENGTH_SHORT).show()
+                }
+            }
         } else {
-            // If a session ID exists, we are in a group session.
-            showNextCard()
+            Toast.makeText(this, "Location permission not granted", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -93,7 +111,7 @@ class MatchActivity : AppCompatActivity() {
         if (currIndex >= restaurants.size) return
 
         val restaurant = restaurants[currIndex]
-        userSwipes.add(Swipe(restaurantId = restaurant.id, liked = right))
+        userSwipes.add(Swipe(restaurantId = restaurant.name, liked = right))
 
         val topId = binding.cardContainer.childCount - 1
         if (topId < 0) {
@@ -140,6 +158,17 @@ class MatchActivity : AppCompatActivity() {
     }
 
     private fun observeViewModel() {
+        viewModel.restaurants.observe(this) { list ->
+            if (list != null && list.isNotEmpty()) {
+                restaurants = list
+                currIndex = 0
+                binding.cardContainer.removeAllViews()
+                showNextCard()
+            } else {
+                binding.matchTitle.text = "No restaurants found nearby."
+            }
+        }
+
         viewModel.sessionResult.observe(this) { result ->
             when (result) {
                 is ApiResult.Loading -> {
@@ -186,7 +215,7 @@ class MatchActivity : AppCompatActivity() {
                 is ApiResult.Success -> {
                     val match = result.data
                     if (match.restaurantId != null) {
-                        val matchedRestaurant = restaurants.find { it.id == match.restaurantId }
+                        val matchedRestaurant = restaurants.find { it.name == match.restaurantId }
                         if (matchedRestaurant != null) {
                             binding.matchTitle.text = "It's a Match!"
                             binding.cardContainer.removeAllViews()
@@ -226,7 +255,7 @@ class MatchActivity : AppCompatActivity() {
         }
 
         val imageView = android.widget.ImageView(this).apply {
-            setImageResource(restaurant.imageId)
+            setImageResource(R.drawable.restaurant)
             layoutParams = FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 500
@@ -242,7 +271,7 @@ class MatchActivity : AppCompatActivity() {
         }
 
         val descView = TextView(this).apply {
-            text = restaurant.description
+            text = restaurant.cuisine
             textSize = 16f
             setTextColor(Color.DKGRAY)
             setPadding(0, 580, 0, 0)
