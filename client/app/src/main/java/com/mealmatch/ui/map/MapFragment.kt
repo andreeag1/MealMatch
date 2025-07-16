@@ -34,6 +34,10 @@ import com.mealmatch.databinding.FragmentMapBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.google.android.material.chip.Chip
+
+
+
 
 class MapFragment : Fragment(), OnMapReadyCallback, MapManager.MapManagerListener {
 
@@ -73,7 +77,10 @@ class MapFragment : Fragment(), OnMapReadyCallback, MapManager.MapManagerListene
         observeViewModel()
     }
 
+// ... inside the MapFragment class
+
     private fun setupUI() {
+        // Adapter and RecyclerView setup (no changes here)
         restaurantAdapter = RestaurantAdapter(placesClient)
         mapRestaurantAdapter = RestaurantAdapter(placesClient)
 
@@ -86,6 +93,10 @@ class MapFragment : Fragment(), OnMapReadyCallback, MapManager.MapManagerListene
             adapter = mapRestaurantAdapter
         }
 
+        // Call the new function to set up the filter chips
+        setupCuisineChips()
+
+        // Setup for TabLayout
         binding.tabLayout.apply {
             addTab(newTab().setText("Restaurants"))
             addTab(newTab().setText("Map"))
@@ -93,18 +104,17 @@ class MapFragment : Fragment(), OnMapReadyCallback, MapManager.MapManagerListene
                 override fun onTabSelected(tab: TabLayout.Tab) {
                     if (tab.position == 0) showList() else showMap()
                 }
-                override fun onTabUnselected(tab: TabLayout.Tab) {}
-                override fun onTabReselected(tab: TabLayout.Tab) {}
+                override fun onTabUnselected(tab: TabLayout.Tab?) {}
+                override fun onTabReselected(tab: TabLayout.Tab?) {}
             })
         }
 
-        // --- FIX IS HERE ---
-        // Forcing the iconified state to false ensures the views are focusable.
+        // Setup for query SearchView
         binding.svQuery.apply {
-            isIconified = false // Ensure the view is expanded
+            isIconified = false
             setOnQueryTextListener(object : SearchView.OnQueryTextListener {
                 override fun onQueryTextSubmit(query: String?): Boolean {
-                    clearFocus() // Hide keyboard
+                    clearFocus()
                     mapViewModel.filterListByText(query)
                     return true
                 }
@@ -115,12 +125,12 @@ class MapFragment : Fragment(), OnMapReadyCallback, MapManager.MapManagerListene
             })
         }
 
-        // --- AND HERE ---
+        // Setup for address SearchView
         binding.svAddress.apply {
-            isIconified = false // Ensure the view is expanded
+            isIconified = false
             setOnQueryTextListener(object : SearchView.OnQueryTextListener {
                 override fun onQueryTextSubmit(address: String?): Boolean {
-                    clearFocus() // Hide keyboard
+                    clearFocus()
                     if (!address.isNullOrBlank()) {
                         geocodeAddressAndFetch(address)
                     }
@@ -130,13 +140,39 @@ class MapFragment : Fragment(), OnMapReadyCallback, MapManager.MapManagerListene
             })
         }
 
-        // Clear focus from the search bars when the fragment starts
         binding.rootCoordinator.requestFocus()
 
         bottomSheetBehavior = BottomSheetBehavior.from(binding.bottomSheet)
         bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
     }
 
+    private fun setupCuisineChips() {
+        val cuisines = listOf("All", "Pizza", "Sushi", "Cafe", "Burger", "Bar", "Pub")
+        val chipGroup = binding.chipGroupCuisines
+        chipGroup.isSelectionRequired = true
+
+        cuisines.forEach { cuisineName ->
+            val chip = layoutInflater.inflate(R.layout.item_filter_chip, chipGroup, false) as Chip
+            chip.text = cuisineName
+            chip.id = View.generateViewId()
+            chipGroup.addView(chip)
+            if (cuisineName == "All") {
+                chip.isChecked = true
+            }
+        }
+
+        chipGroup.setOnCheckedStateChangeListener { group, checkedIds ->
+            val selectedChipId = checkedIds.firstOrNull() ?: return@setOnCheckedStateChangeListener
+            val selectedChip = group.findViewById<Chip>(selectedChipId)
+            val selectedCuisine = selectedChip.text.toString()
+
+            if (selectedCuisine == "All") {
+                mapViewModel.filterListByCuisine(null)
+            } else {
+                mapViewModel.filterListByCuisine(selectedCuisine)
+            }
+        }
+    }
 
     private fun setupMap() {
         var mapFrag = childFragmentManager.findFragmentById(R.id.google_map) as? SupportMapFragment
