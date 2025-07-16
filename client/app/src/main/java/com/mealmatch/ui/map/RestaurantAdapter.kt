@@ -17,25 +17,11 @@ class RestaurantAdapter(
     private val placesClient: PlacesClient
 ) : ListAdapter<Restaurant, RestaurantAdapter.ViewHolder>(DIFF_CALLBACK) {
 
-    private var fullList = listOf<Restaurant>()
-
     companion object {
         private val DIFF_CALLBACK = object : DiffUtil.ItemCallback<Restaurant>() {
             override fun areItemsTheSame(a: Restaurant, b: Restaurant) = a.name == b.name
             override fun areContentsTheSame(a: Restaurant, b: Restaurant) = a == b
         }
-    }
-
-    fun updateData(list: List<Restaurant>) {
-        fullList = list
-        super.submitList(list)
-    }
-
-    fun filterByName(query: String) {
-        val filtered = fullList.filter {
-            it.name.contains(query, ignoreCase = true)
-        }
-        super.submitList(filtered)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
@@ -65,17 +51,13 @@ class RestaurantAdapter(
             // Photo: fetch the first metadata or show placeholder
             r.photoMetadata?.let { meta ->
                 val photoReq = FetchPhotoRequest.builder(meta)
-                    .setMaxWidth(200)    // adjust as needed
+                    .setMaxWidth(200)
                     .setMaxHeight(200)
                     .build()
 
                 placesClient.fetchPhoto(photoReq)
-                    .addOnSuccessListener { resp ->
-                        thumbnail.setImageBitmap(resp.bitmap)
-                    }
-                    .addOnFailureListener {
-                        thumbnail.setImageResource(R.drawable.restaurant)
-                    }
+                    .addOnSuccessListener { resp -> thumbnail.setImageBitmap(resp.bitmap) }
+                    .addOnFailureListener { thumbnail.setImageResource(R.drawable.restaurant) }
             } ?: thumbnail.setImageResource(R.drawable.restaurant)
         }
     }
