@@ -25,8 +25,15 @@ import kotlin.math.abs
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import android.content.pm.PackageManager
+import android.graphics.Typeface
 import androidx.core.content.ContextCompat
 import android.location.Location
+import android.text.TextUtils
+import android.widget.ImageView
+import android.widget.LinearLayout
+import com.google.android.libraries.places.api.Places
+import com.google.android.libraries.places.api.model.PhotoMetadata
+import com.google.android.libraries.places.api.net.FetchPhotoRequest
 
 class MatchActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMatchBinding
@@ -82,6 +89,26 @@ class MatchActivity : AppCompatActivity() {
         } else {
             Toast.makeText(this, "Location permission not granted", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    private fun loadPlacePhoto(photoMetadata: PhotoMetadata?, imageView: ImageView) {
+        if (photoMetadata == null) {
+            // if no image avail, use default icon
+            imageView.setImageResource(R.drawable.restaurant)
+            return
+        }
+        val photoRequest = FetchPhotoRequest.builder(photoMetadata)
+            .setMaxWidth(800)
+            .setMaxHeight(500)
+            .build()
+        val placesClient = Places.createClient(this)
+        placesClient.fetchPhoto(photoRequest)
+            .addOnSuccessListener { response ->
+                imageView.setImageBitmap(response.bitmap)
+            }
+            .addOnFailureListener {
+                imageView.setImageResource(R.drawable.restaurant)
+            }
     }
 
     private fun setupToolbar() {
@@ -246,7 +273,8 @@ class MatchActivity : AppCompatActivity() {
             setCardBackgroundColor(Color.WHITE)
         }
 
-        val container = FrameLayout(this).apply {
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
             layoutParams = FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT
@@ -254,27 +282,44 @@ class MatchActivity : AppCompatActivity() {
             setPadding(32)
         }
 
-        val imageView = android.widget.ImageView(this).apply {
-            setImageResource(R.drawable.restaurant)
-            layoutParams = FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
+        val imageView = ImageView(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
                 500
             )
-            scaleType = android.widget.ImageView.ScaleType.CENTER_CROP
+            scaleType = ImageView.ScaleType.CENTER_CROP
         }
 
+        // load image
+        loadPlacePhoto(restaurant.photoMetadata, imageView)
+
+        // wrap title
         val titleView = TextView(this).apply {
             text = restaurant.name
             textSize = 22f
             setTextColor(Color.BLACK)
-            setPadding(0, 520, 0, 0)
+            setTypeface(null, Typeface.BOLD)
+            setPadding(0, 16, 0, 8)
+            maxLines = 2
+            ellipsize = TextUtils.TruncateAt.END
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
         }
 
         val descView = TextView(this).apply {
-            text = restaurant.cuisine
+            // parse to capitalize
+            text = restaurant.cuisine.split(" ").joinToString(" ") { it.replaceFirstChar(Char::uppercaseChar) }
             textSize = 16f
             setTextColor(Color.DKGRAY)
-            setPadding(0, 580, 0, 0)
+            setPadding(0, 0, 0, 8)
+            maxLines = 3
+            ellipsize = TextUtils.TruncateAt.END
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
         }
 
         container.addView(imageView)
