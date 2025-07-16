@@ -40,7 +40,24 @@
             android:queryHint="Current location"
             android:iconifiedByDefault="false"
             android:background="@drawable/search_background"/>
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none"
+            android:paddingHorizontal="8dp"
+            android:paddingBottom="8dp">
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chip_group_cuisines"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:singleSelection="true"
+                app:selectionRequired="true">
+            </com.google.android.material.chip.ChipGroup>
+        </HorizontalScrollView>
     </com.google.android.material.appbar.AppBarLayout>
+
 
     <!-- ─── 1) Full-screen list for “Restaurants” ───────────────────── -->
     <androidx.recyclerview.widget.RecyclerView

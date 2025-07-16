@@ -9,13 +9,13 @@ import retrofit2.http.Header
 import retrofit2.http.POST
 
 interface ProfilePrefApiService {
-    @POST("api/user_profiles")
+    @POST("/api/user_profiles")
     suspend fun setProfilePref(
         @Header("Authorization") token: String,
         @Body request: UserProfileMessage
     ): Response<ApiResponse<Unit>>
 
-    @GET("api/user_profiles")
+    @GET("/api/user_profiles")
     suspend fun getProfilePref(
         @Header("Authorization") token: String
     ): Response<ApiResponse<UserProfileMessage>>

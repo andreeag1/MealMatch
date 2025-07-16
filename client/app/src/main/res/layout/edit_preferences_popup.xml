@@ -9,19 +9,19 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <EditText
+        <Spinner
             android:id="@+id/inputCuisine"
             android:hint="Cuisine Preferences"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
-        <EditText
+        <Spinner
             android:id="@+id/inputDietary"
             android:hint="Dietary Preferences"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
-        <EditText
+        <Spinner
             android:id="@+id/inputAmbiance"
             android:hint="Ambiance Preferences"
             android:layout_width="match_parent"

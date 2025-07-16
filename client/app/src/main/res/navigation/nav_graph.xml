@@ -29,7 +29,7 @@
     <!-- Map Page Fragment -->
     <fragment
         android:id="@+id/mapFragment"
-        android:name="com.mealmatch.ui.MapFragment"
+        android:name="com.mealmatch.ui.map.MapFragment"
         android:label="@string/map_page_label"
         tools:layout="@layout/fragment_map" />
 
