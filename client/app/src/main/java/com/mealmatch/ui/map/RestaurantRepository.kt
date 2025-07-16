@@ -31,7 +31,7 @@ class RestaurantRepository(private val placesClient: PlacesClient) {
 
         val request = SearchNearbyRequest.builder(circle, placeFields)
             .setIncludedPrimaryTypes(listOf("restaurant"))
-            .setMaxResultCount(20)
+            .setMaxResultCount(5)
             .build()
 
 

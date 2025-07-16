@@ -52,7 +52,6 @@ class MapFragment : Fragment(), OnMapReadyCallback, MapManager.MapManagerListene
     private lateinit var mapRestaurantAdapter: RestaurantAdapter
     private lateinit var bottomSheetBehavior: BottomSheetBehavior<*>
 
-    // Holds the current state of all filters
     private var currentSearchCriteria = SearchCriteria()
 
     private val mapViewModel: MapViewModel by viewModels {
@@ -106,7 +105,7 @@ class MapFragment : Fragment(), OnMapReadyCallback, MapManager.MapManagerListene
             })
         }
 
-        binding.svQuery.isIconified = false // This is a search view, not a filter
+        binding.svQuery.isIconified = false
 
         binding.svAddress.apply {
             isIconified = false
@@ -134,7 +133,6 @@ class MapFragment : Fragment(), OnMapReadyCallback, MapManager.MapManagerListene
         chipGroup.isSingleSelection = true
         chipGroup.isSelectionRequired = false
 
-        // Add quick filter chips
         quickCuisines.forEach { cuisine ->
             val chip = (layoutInflater.inflate(R.layout.item_filter_chip, chipGroup, false) as Chip).apply {
                 text = cuisine
@@ -143,11 +141,8 @@ class MapFragment : Fragment(), OnMapReadyCallback, MapManager.MapManagerListene
             chipGroup.addView(chip)
         }
 
-        // Add the main "Filters" chip
         val filterChip = (layoutInflater.inflate(R.layout.item_filter_chip, chipGroup, false) as Chip).apply {
             text = "Filters"
-            // IMPORTANT: You must create an 'ic_filter.xml' drawable in your res/drawable folder.
-            // You can do this by right-clicking the drawable folder -> New -> Vector Asset.
             chipIcon = ContextCompat.getDrawable(requireContext(), R.drawable.ic_close)
             isCheckable = false // This chip acts as a button
             setOnClickListener {
@@ -161,10 +156,9 @@ class MapFragment : Fragment(), OnMapReadyCallback, MapManager.MapManagerListene
         chipGroup.setOnCheckedStateChangeListener { group, checkedIds ->
             // The listener provides a list of checked IDs. For single selection, it will have 0 or 1 item.
             if (checkedIds.isEmpty()) {
-                // User deselected a chip, so clear all filters
                 currentSearchCriteria = SearchCriteria()
             } else {
-                val checkedId = checkedIds.first() // Get the single checked ID
+                val checkedId = checkedIds.first()
                 val selectedChip = group.findViewById<Chip>(checkedId)
                 if (selectedChip != null && selectedChip.isCheckable) {
                     // Create new criteria based on the single quick filter selected
@@ -178,11 +172,9 @@ class MapFragment : Fragment(), OnMapReadyCallback, MapManager.MapManagerListene
     override fun onFiltersApplied(searchCriteria: SearchCriteria) {
         this.currentSearchCriteria = searchCriteria
         mapViewModel.updateSearchCriteria(searchCriteria)
-        // Uncheck any quick filter chips as the advanced filter is now active
         binding.chipGroupCuisines.clearCheck()
     }
 
-    // ... (rest of MapFragment, no changes needed for geocoding, map setup, etc.)
     private fun setupMap() {
         var mapFrag = childFragmentManager.findFragmentById(R.id.google_map) as? SupportMapFragment
         if (mapFrag == null) {
@@ -272,7 +264,6 @@ class MapFragment : Fragment(), OnMapReadyCallback, MapManager.MapManagerListene
                     currentLocation = location
                     currentSearchCenter = LatLng(location.latitude, location.longitude)
                     mapManager?.moveCamera(currentSearchCenter!!)
-                    // UPDATED: Call the correct ViewModel function
                     mapViewModel.fetchRestaurantsForLocation(currentSearchCenter!!, location)
                 } else {
                     Toast.makeText(context, "Could not get current location.", Toast.LENGTH_SHORT).show()

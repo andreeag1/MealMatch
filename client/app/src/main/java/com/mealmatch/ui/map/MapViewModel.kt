@@ -12,7 +12,6 @@ import com.mealmatch.data.model.SearchCriteria
 class MapViewModel(private val repository: RestaurantRepository) : ViewModel() {
 
     private var fullRestaurantList = listOf<Restaurant>()
-    // The single source of truth for all active filters.
     private var activeSearchCriteria = SearchCriteria()
 
     private val _restaurants = MutableLiveData<List<Restaurant>>()

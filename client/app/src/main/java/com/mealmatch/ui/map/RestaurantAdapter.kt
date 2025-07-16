@@ -48,7 +48,6 @@ class RestaurantAdapter(
             ratingTv.text = String.format("★ %.1f", r.rating)
             distTv.text   = String.format("%.1f km", r.distance)
 
-            // Photo: fetch the first metadata or show placeholder
             r.photoMetadata?.let { meta ->
                 val photoReq = FetchPhotoRequest.builder(meta)
                     .setMaxWidth(200)
