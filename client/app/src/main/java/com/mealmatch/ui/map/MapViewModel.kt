@@ -5,13 +5,15 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.google.android.gms.maps.model.LatLng
+import com.mealmatch.data.model.Budget
 import com.mealmatch.data.model.Restaurant
+import com.mealmatch.data.model.SearchCriteria
 
 class MapViewModel(private val repository: RestaurantRepository) : ViewModel() {
 
     private var fullRestaurantList = listOf<Restaurant>()
-    private var currentTextQuery: String? = null
-    private var currentCuisineFilter: String? = null // 1. Add state for cuisine filter
+    // The single source of truth for all active filters.
+    private var activeSearchCriteria = SearchCriteria()
 
     private val _restaurants = MutableLiveData<List<Restaurant>>()
     val restaurants: LiveData<List<Restaurant>> = _restaurants
@@ -19,13 +21,15 @@ class MapViewModel(private val repository: RestaurantRepository) : ViewModel() {
     private val _error = MutableLiveData<String?>()
     val error: LiveData<String?> = _error
 
+    /** Fetches a new list of all restaurants for a given location. */
     fun fetchRestaurantsForLocation(center: LatLng, origin: Location) {
         repository.fetchNearby(
             center = center,
             origin = origin,
             onSuccess = { results ->
                 fullRestaurantList = results
-                applyAllFilters() // IMPORTANT: Changed to applyAllFilters
+                // Apply the existing filters to the new list of restaurants
+                applyFilters()
             },
             onFailure = { exception ->
                 _error.postValue("Failed to fetch restaurants: ${exception.message}")
@@ -33,34 +37,47 @@ class MapViewModel(private val repository: RestaurantRepository) : ViewModel() {
         )
     }
 
-    fun filterListByText(query: String?) {
-        currentTextQuery = query
-        applyAllFilters() // Changed to applyAllFilters
+    /**
+     * Updates the active search criteria and re-filters the restaurant list.
+     * This is the main entry point for all filtering actions.
+     */
+    fun updateSearchCriteria(newCriteria: SearchCriteria) {
+        activeSearchCriteria = newCriteria
+        applyFilters()
     }
 
-    // 2. Add new function to handle cuisine selection
-    fun filterListByCuisine(cuisine: String?) {
-        currentCuisineFilter = cuisine
-        applyAllFilters()
-    }
-
-    // 3. Rename applyTextFilter to applyAllFilters and update logic
-    private fun applyAllFilters() {
-        // Start with the full list
+    private fun applyFilters() {
         var filteredList = fullRestaurantList
 
-        // First, apply the cuisine filter if one is selected
-        currentCuisineFilter?.let { cuisine ->
+        // 1. Filter by Cuisines
+        if (activeSearchCriteria.cuisines.isNotEmpty()) {
             filteredList = filteredList.filter { restaurant ->
-                restaurant.cuisine.contains(cuisine, ignoreCase = true)
+                // Check if the restaurant's cuisine list contains ANY of the selected cuisines
+                activeSearchCriteria.cuisines.any { selectedCuisine ->
+                    restaurant.allCuisines.contains(selectedCuisine)
+                }
             }
         }
 
-        // Next, apply the text query on the already-filtered list
-        if (!currentTextQuery.isNullOrBlank()) {
+        // 2. Filter by Dietary Needs
+        if (activeSearchCriteria.dietaryNeeds.isNotEmpty()) {
             filteredList = filteredList.filter { restaurant ->
-                restaurant.name.contains(currentTextQuery!!, ignoreCase = true) ||
-                        restaurant.cuisine.contains(currentTextQuery!!, ignoreCase = true)
+                // Check if the restaurant's dietary list contains ALL of the selected needs
+                restaurant.dietaryNeeds.containsAll(activeSearchCriteria.dietaryNeeds)
+            }
+        }
+
+        // 3. Filter by Ambiance
+        if (activeSearchCriteria.ambiance.isNotEmpty()) {
+            filteredList = filteredList.filter { restaurant ->
+                restaurant.ambiance.containsAll(activeSearchCriteria.ambiance)
+            }
+        }
+
+        // 4. Filter by Budget
+        if (activeSearchCriteria.budget != Budget.ANY) {
+            filteredList = filteredList.filter { restaurant ->
+                restaurant.budget == activeSearchCriteria.budget
             }
         }
 

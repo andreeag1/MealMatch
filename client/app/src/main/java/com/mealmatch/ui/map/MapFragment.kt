@@ -12,6 +12,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.widget.SearchView
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -26,20 +27,18 @@ import com.google.android.libraries.places.api.net.FetchPhotoRequest
 import com.google.android.libraries.places.api.net.PlacesClient
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.android.material.chip.Chip
 import com.google.android.material.tabs.TabLayout
 import com.mealmatch.BuildConfig
 import com.mealmatch.R
 import com.mealmatch.data.model.Restaurant
+import com.mealmatch.data.model.SearchCriteria
 import com.mealmatch.databinding.FragmentMapBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import com.google.android.material.chip.Chip
 
-
-
-
-class MapFragment : Fragment(), OnMapReadyCallback, MapManager.MapManagerListener {
+class MapFragment : Fragment(), OnMapReadyCallback, MapManager.MapManagerListener, FiltersDialogFragment.FiltersDialogListener {
 
     private var _binding: FragmentMapBinding? = null
     private val binding get() = _binding!!
@@ -52,6 +51,9 @@ class MapFragment : Fragment(), OnMapReadyCallback, MapManager.MapManagerListene
     private lateinit var restaurantAdapter: RestaurantAdapter
     private lateinit var mapRestaurantAdapter: RestaurantAdapter
     private lateinit var bottomSheetBehavior: BottomSheetBehavior<*>
+
+    // Holds the current state of all filters
+    private var currentSearchCriteria = SearchCriteria()
 
     private val mapViewModel: MapViewModel by viewModels {
         MapViewModelFactory(RestaurantRepository(placesClient))
@@ -77,10 +79,7 @@ class MapFragment : Fragment(), OnMapReadyCallback, MapManager.MapManagerListene
         observeViewModel()
     }
 
-// ... inside the MapFragment class
-
     private fun setupUI() {
-        // Adapter and RecyclerView setup (no changes here)
         restaurantAdapter = RestaurantAdapter(placesClient)
         mapRestaurantAdapter = RestaurantAdapter(placesClient)
 
@@ -93,10 +92,8 @@ class MapFragment : Fragment(), OnMapReadyCallback, MapManager.MapManagerListene
             adapter = mapRestaurantAdapter
         }
 
-        // Call the new function to set up the filter chips
-        setupCuisineChips()
+        setupFilterChips()
 
-        // Setup for TabLayout
         binding.tabLayout.apply {
             addTab(newTab().setText("Restaurants"))
             addTab(newTab().setText("Map"))
@@ -109,23 +106,8 @@ class MapFragment : Fragment(), OnMapReadyCallback, MapManager.MapManagerListene
             })
         }
 
-        // Setup for query SearchView
-        binding.svQuery.apply {
-            isIconified = false
-            setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-                override fun onQueryTextSubmit(query: String?): Boolean {
-                    clearFocus()
-                    mapViewModel.filterListByText(query)
-                    return true
-                }
-                override fun onQueryTextChange(newText: String?): Boolean {
-                    mapViewModel.filterListByText(newText)
-                    return true
-                }
-            })
-        }
+        binding.svQuery.isIconified = false // This is a search view, not a filter
 
-        // Setup for address SearchView
         binding.svAddress.apply {
             isIconified = false
             setOnQueryTextListener(object : SearchView.OnQueryTextListener {
@@ -146,34 +128,61 @@ class MapFragment : Fragment(), OnMapReadyCallback, MapManager.MapManagerListene
         bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
     }
 
-    private fun setupCuisineChips() {
-        val cuisines = listOf("All", "Pizza", "Sushi", "Cafe", "Burger", "Bar", "Pub")
+    private fun setupFilterChips() {
+        val quickCuisines = listOf("Pizza", "Sushi", "Cafe", "Burger")
         val chipGroup = binding.chipGroupCuisines
-        chipGroup.isSelectionRequired = true
+        chipGroup.isSingleSelection = true
+        chipGroup.isSelectionRequired = false
 
-        cuisines.forEach { cuisineName ->
-            val chip = layoutInflater.inflate(R.layout.item_filter_chip, chipGroup, false) as Chip
-            chip.text = cuisineName
-            chip.id = View.generateViewId()
-            chipGroup.addView(chip)
-            if (cuisineName == "All") {
-                chip.isChecked = true
+        // Add quick filter chips
+        quickCuisines.forEach { cuisine ->
+            val chip = (layoutInflater.inflate(R.layout.item_filter_chip, chipGroup, false) as Chip).apply {
+                text = cuisine
+                isCheckable = true
             }
+            chipGroup.addView(chip)
         }
 
-        chipGroup.setOnCheckedStateChangeListener { group, checkedIds ->
-            val selectedChipId = checkedIds.firstOrNull() ?: return@setOnCheckedStateChangeListener
-            val selectedChip = group.findViewById<Chip>(selectedChipId)
-            val selectedCuisine = selectedChip.text.toString()
-
-            if (selectedCuisine == "All") {
-                mapViewModel.filterListByCuisine(null)
-            } else {
-                mapViewModel.filterListByCuisine(selectedCuisine)
+        // Add the main "Filters" chip
+        val filterChip = (layoutInflater.inflate(R.layout.item_filter_chip, chipGroup, false) as Chip).apply {
+            text = "Filters"
+            // IMPORTANT: You must create an 'ic_filter.xml' drawable in your res/drawable folder.
+            // You can do this by right-clicking the drawable folder -> New -> Vector Asset.
+            chipIcon = ContextCompat.getDrawable(requireContext(), R.drawable.ic_close)
+            isCheckable = false // This chip acts as a button
+            setOnClickListener {
+                FiltersDialogFragment.newInstance(currentSearchCriteria)
+                    .show(childFragmentManager, FiltersDialogFragment.TAG)
             }
+        }
+        chipGroup.addView(filterChip)
+
+        // Listener for quick filters
+        chipGroup.setOnCheckedStateChangeListener { group, checkedIds ->
+            // The listener provides a list of checked IDs. For single selection, it will have 0 or 1 item.
+            if (checkedIds.isEmpty()) {
+                // User deselected a chip, so clear all filters
+                currentSearchCriteria = SearchCriteria()
+            } else {
+                val checkedId = checkedIds.first() // Get the single checked ID
+                val selectedChip = group.findViewById<Chip>(checkedId)
+                if (selectedChip != null && selectedChip.isCheckable) {
+                    // Create new criteria based on the single quick filter selected
+                    currentSearchCriteria = SearchCriteria(cuisines = mutableSetOf(selectedChip.text.toString()))
+                }
+            }
+            mapViewModel.updateSearchCriteria(currentSearchCriteria)
         }
     }
 
+    override fun onFiltersApplied(searchCriteria: SearchCriteria) {
+        this.currentSearchCriteria = searchCriteria
+        mapViewModel.updateSearchCriteria(searchCriteria)
+        // Uncheck any quick filter chips as the advanced filter is now active
+        binding.chipGroupCuisines.clearCheck()
+    }
+
+    // ... (rest of MapFragment, no changes needed for geocoding, map setup, etc.)
     private fun setupMap() {
         var mapFrag = childFragmentManager.findFragmentById(R.id.google_map) as? SupportMapFragment
         if (mapFrag == null) {

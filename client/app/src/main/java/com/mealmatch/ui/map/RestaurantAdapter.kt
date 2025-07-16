@@ -44,7 +44,7 @@ class RestaurantAdapter(
         fun bind(r: Restaurant) {
             // Text fields
             nameTv.text   = r.name
-            typeTv.text   = r.cuisine
+            typeTv.text   = r.primaryCuisine
             ratingTv.text = String.format("★ %.1f", r.rating)
             distTv.text   = String.format("%.1f km", r.distance)
 
