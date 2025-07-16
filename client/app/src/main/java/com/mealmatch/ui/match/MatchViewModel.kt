@@ -30,7 +30,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 
 class MatchViewModel (application: Application) : AndroidViewModel(application) {
     private val sessionRepository = SessionRepository()
-    private val placesClient: PlacesClient
+    internal val placesClient: PlacesClient
 
     private val _sessionResult = MutableLiveData<ApiResult<MatchSessionResponse>>()
     val sessionResult: LiveData<ApiResult<MatchSessionResponse>> = _sessionResult

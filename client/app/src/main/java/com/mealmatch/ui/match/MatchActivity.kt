@@ -1,5 +1,6 @@
 package com.mealmatch.ui.match
 
+import android.Manifest
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -12,6 +13,7 @@ import android.widget.TextView
 import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import androidx.core.view.setPadding
@@ -46,6 +48,17 @@ class MatchActivity : AppCompatActivity() {
     private var currIndex = 0
     private val userSwipes = mutableListOf<Swipe>()
 
+    private val locationPermissionRequest = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            fetchLocationAndRestaurants()
+        } else {
+            Toast.makeText(this, "Location permission is required for matching.", Toast.LENGTH_LONG).show()
+        }
+    }
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMatchBinding.inflate(layoutInflater)
@@ -78,16 +91,25 @@ class MatchActivity : AppCompatActivity() {
     }
 
     private fun fetchLocationAndRestaurants() {
-        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                if (location != null) {
-                    viewModel.fetchNearbyRestaurants(location)
-                } else {
-                    Toast.makeText(this, "Could not get location", Toast.LENGTH_SHORT).show()
-                }
+        when {
+            ContextCompat.checkSelfPermission(
+                this, Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED -> {
+                // Permission is already granted, fetch the location.
+
+                fusedLocationClient.getCurrentLocation(com.google.android.gms.location.LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY, null)
+                    .addOnSuccessListener { location: Location? ->
+                        if (location != null) {
+                            viewModel.fetchNearbyRestaurants(location)
+                        } else {
+                            Toast.makeText(this, "Could not get location. Please ensure location services are on.", Toast.LENGTH_LONG).show()
+                        }
+                    }
             }
-        } else {
-            Toast.makeText(this, "Location permission not granted", Toast.LENGTH_SHORT).show()
+            else -> {
+                // Permission is not granted, launch the request.
+                locationPermissionRequest.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+            }
         }
     }
 
@@ -101,8 +123,10 @@ class MatchActivity : AppCompatActivity() {
             .setMaxWidth(800)
             .setMaxHeight(500)
             .build()
-        val placesClient = Places.createClient(this)
-        placesClient.fetchPhoto(photoRequest)
+        //  val placesClient = Places.createClient(this)
+        //  Creating a client for every photo request which is bad practice
+        //  Use the 1 client from viewModel for all requests below to avoid resource leaks
+        viewModel.placesClient.fetchPhoto(photoRequest)
             .addOnSuccessListener { response ->
                 imageView.setImageBitmap(response.bitmap)
             }
