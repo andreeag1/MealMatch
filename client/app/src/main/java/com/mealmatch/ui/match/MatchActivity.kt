@@ -310,7 +310,7 @@ class MatchActivity : AppCompatActivity() {
 
         val descView = TextView(this).apply {
             // parse to capitalize
-            text = restaurant.cuisine.split(" ").joinToString(" ") { it.replaceFirstChar(Char::uppercaseChar) }
+            text = restaurant.primaryCuisine.split(" ").joinToString(" ") { it.replaceFirstChar(Char::uppercaseChar) }
             textSize = 16f
             setTextColor(Color.DKGRAY)
             setPadding(0, 0, 0, 8)

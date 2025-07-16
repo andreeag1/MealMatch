@@ -143,7 +143,7 @@ class MatchViewModel (application: Application) : AndroidViewModel(application) 
                         val cuisine = p.placeTypes?.firstOrNull()?.toString()?.replace("_", " ") ?: "Unknown"
                         Restaurant(
                             name = p.name ?: "Unnamed",
-                            cuisine = cuisine,
+                            primaryCuisine = cuisine,
                             rating = p.rating ?: 0.0,
                             distance = 0.0, // You can calculate distance if needed
                             latLng = p.latLng!!,
@@ -182,7 +182,7 @@ class MatchViewModel (application: Application) : AndroidViewModel(application) 
 
             val restaurant = Restaurant(
                 name = place.name ?: "Unnamed",
-                cuisine = place.types?.firstOrNull()?.name
+                primaryCuisine = place.types?.firstOrNull()?.name
                     ?.lowercase()?.replace('_', ' ')
                     ?.replaceFirstChar(Char::uppercaseChar) ?: "Unknown",
                 rating = place.rating ?: 0.0,
