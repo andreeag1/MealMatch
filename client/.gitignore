@@ -10,6 +10,8 @@
 .DS_Store
 /captures/
 /kotlin-profile/
+/wrapper/dists/
+
 
 # IDE-specific files 
 *.iml
