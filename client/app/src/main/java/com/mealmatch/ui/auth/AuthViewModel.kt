@@ -53,8 +53,8 @@ class AuthViewModel : ViewModel() {
                     UserViewModel.email = email
 
                     val apiResponse = response.body()
-                    if (apiResponse != null && apiResponse.success && apiResponse.token != null) {
-                        _authResult.value = ApiResult.Success(AuthResponse(apiResponse.token, username))
+                    if (apiResponse != null && apiResponse.success && apiResponse.data != null) {
+                        _authResult.value = ApiResult.Success(apiResponse.data);
                     } else {
                         _authResult.value = ApiResult.Error(apiResponse?.message ?: "Sign up failed")
                     }
