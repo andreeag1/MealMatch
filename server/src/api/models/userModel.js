@@ -1,5 +1,6 @@
 import { Schema, model } from "mongoose";
 import { genSalt, hash, compare } from "bcryptjs";
+import { userPreferenceSchema } from "./profilePrefModel.js";
 
 const userSchema = new Schema({
   username: {
@@ -25,6 +26,11 @@ const userSchema = new Schema({
     select: false,
   },
   friends: [{ type: Schema.Types.ObjectId, ref: "User" }],
+  preferences: {
+    type: userPreferenceSchema,
+    default: () => ({}),
+    required: false,
+  },
 });
 
 // Mongoose middleware to hash password before saving

@@ -1,5 +1,6 @@
 import response from "../helpers/response.js";
-import { PrefMsg, ProfilePref } from "../models/profilePrefModel.js";
+import { ProfilePref } from "../models/profilePrefModel.js";
+import User from "../models/userModel.js";
 
 /**
  * @desc Create or update user profile preferences
@@ -7,39 +8,32 @@ import { PrefMsg, ProfilePref } from "../models/profilePrefModel.js";
  */
 export const setProfilePref = async (req, res) => {
   try {
-    const { userID, username, email, userPreferenceMessage } = req.body;
-    const { cuisine, dietary, ambiance, budget } = userPreferenceMessage;
+    const { cuisine, dietary, ambiance, budget } = req.body;
+    const userID = req.user._id;
+    const user = await User.findById(userID);
 
-    // const userId = req.user._id;
-    // console.log("Incoming req.body:", req.body); // Log what you receive
-
-    // const { cuisine, dietary, ambiance, budget, username, email } = req.body;
-
-
-    console.log("Parsed values:", { userID, cuisine, dietary, ambiance, budget, username, email });
-
-    const newPrefMsg = new PrefMsg({
+    const newPreferences = new ProfilePref({
       cuisine,
       dietary,
       ambiance,
       budget,
     });
 
-    const newProfilePref = new ProfilePref({
-      userID: userID,
-      username,
-      email,
-      userPreferenceMessage: newPrefMsg,
-    });
+    user.preferences = { ...user.preferences, ...req.body };
 
-    const savedProfilePref = await newProfilePref.save();
-    console.log("Saving newProfilePref:", newProfilePref);
+    await user.save();
 
-    return response(res, "Profile preferences saved", 200, true, savedProfilePref);
+    return response(
+      res,
+      "Profile preferences saved",
+      200,
+      true,
+      newPreferences
+    );
   } catch (error) {
-    console.error("Error saving profile preferences:", error);
-
-    return response(res, "Internal server error", 500, false, { error: error.message });
+    return response(res, "Internal server error", 500, false, {
+      error: error.message,
+    });
   }
 };
 
@@ -49,16 +43,23 @@ export const setProfilePref = async (req, res) => {
  */
 export const getProfilePref = async (req, res) => {
   try {
+    const userID = req.user._id;
+    const user = await User.findById(userID);
 
-    const {userID} = req.body;
-    const profile = await ProfilePref.findOne({ userID: userID });
-
-    if (profile) {
-      return response(res, "Profile preferences found", 200, true, profile);
+    if (user.preferences != null) {
+      return response(
+        res,
+        "Profile preferences found",
+        200,
+        true,
+        user.preferences
+      );
     } else {
       return response(res, "Profile preferences not found", 404, false);
     }
   } catch (error) {
-    return response(res, "Internal server error", 500, false, { error: error.message });
+    return response(res, "Internal server error", 500, false, {
+      error: error.message,
+    });
   }
 };

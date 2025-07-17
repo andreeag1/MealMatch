@@ -1,4 +1,4 @@
-package com.mealmatch.ui
+package com.mealmatch.ui.profile
 
 import android.annotation.SuppressLint
 import android.content.Intent
@@ -11,10 +11,11 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.mealmatch.R
 import com.mealmatch.data.local.TokenManager
-import com.mealmatch.data.model.*
 import com.mealmatch.data.network.repository.ProfilePrefRepository
 import com.mealmatch.databinding.FragmentProfileBinding
 import com.mealmatch.ui.auth.AuthActivity
+import com.mealmatch.data.model.UserPreferences
+import com.mealmatch.data.model.UserViewModel
 import kotlinx.coroutines.launch
 
 data class UserPreferences(
@@ -162,24 +163,17 @@ class ProfileFragment : Fragment() {
 
         val authHeader = "Bearer $token"
 
-        val preferences = UserPreferenceMessage(
+        val preferences = UserPreferences(
             cuisine = userSettings.cuisines.orEmpty(),
             dietary = userSettings.dietary.orEmpty(),
             ambiance = userSettings.ambiance.orEmpty(),
             budget = userSettings.budget.orEmpty()
         )
 
-        val userProfile = UserProfileMessage(
-            userID = token,
-            username = userSettings.username,
-            email = userSettings.email,
-            userPreferenceMessage = preferences
-        )
-
         lifecycleScope.launch {
             try {
-                Log.i("ProfileFragment", "Sending preferences: $userProfile")
-                profilePrefRepository.setProfilePref(authHeader, userProfile) // ✅ FIXED
+                Log.i("ProfileFragment", "Sending preferences: $preferences")
+                profilePrefRepository.setProfilePref(authHeader, preferences)
             } catch (e: Exception) {
                 Log.e("ProfileFragment", "Failed to save profile", e)
             }
@@ -198,7 +192,7 @@ class ProfileFragment : Fragment() {
             try {
                 val response = profilePrefRepository.getProfilePref(authHeader) 
                 if (response.isSuccessful) {
-                    val prefs = response.body()?.data?.userPreferenceMessage
+                    val prefs = response.body()?.data
 
                     handleEditPreferences(
                         prefs?.cuisine.orEmpty(),
