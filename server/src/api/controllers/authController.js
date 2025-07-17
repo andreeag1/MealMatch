@@ -7,7 +7,7 @@ const { jwtSecret, jwtExpiresIn } = config;
 
 /**
  * @desc Create a new user
- * @route POST /api/users
+ * @route POST /api/users/login
  */
 export const login = async (req, res) => {
   try {
@@ -26,7 +26,10 @@ export const login = async (req, res) => {
       expiresIn: jwtExpiresIn,
     });
 
-    return response(res, "Login Successful", 200, true, { token, username: user.username });
+    return response(res, "Login Successful", 200, true, {
+      token,
+      username: user.username,
+    });
   } catch (error) {
     return response(res, "Internal server error", 500, false, {
       error: error.message,
@@ -36,7 +39,7 @@ export const login = async (req, res) => {
 
 /**
  * @desc Create a new user
- * @route POST /api/users
+ * @route POST /api/users/register
  */
 export const register = async (req, res) => {
   try {
@@ -48,7 +51,10 @@ export const register = async (req, res) => {
       expiresIn: jwtExpiresIn,
     });
 
-    return response(res, "New User Created", 201, true, { token });
+    return response(res, "New User Created", 201, true, {
+      token,
+      username: username,
+    });
   } catch (error) {
     return response(res, "Internal server error", 500, false, {
       error: error.message,
