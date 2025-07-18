@@ -31,6 +31,12 @@ const matchSessionSchema = new mongoose.Schema(
       enum: ["active", "completed", "aborted"],
       default: "active",
     },
+    preferences: {
+      cuisine: { type: String },
+      dietary: { type: String },
+      ambiance: { type: String },
+      budget: { type: String },
+    },
     restaurants: [
       {
         type: String,

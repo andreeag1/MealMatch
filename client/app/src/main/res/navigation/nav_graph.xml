@@ -36,7 +36,7 @@
     <!-- Profile Page Fragment -->
     <fragment
         android:id="@+id/profileFragment"
-        android:name="com.mealmatch.ui.ProfileFragment"
+        android:name="com.mealmatch.ui.profile.ProfileFragment"
         android:label="@string/profile_page_label"
         tools:layout="@layout/fragment_profile" />
 </navigation>

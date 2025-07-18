@@ -21,6 +21,7 @@ const getRestaurantsForSession = async () => {
 export const createMatchSession = async (req, res) => {
   try {
     const { groupId } = req.params;
+    const { preferences } = req.body;
 
     const group = await Group.findById(groupId);
     if (!group) {

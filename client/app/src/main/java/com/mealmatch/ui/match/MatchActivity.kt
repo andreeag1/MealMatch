@@ -47,6 +47,7 @@ class MatchActivity : AppCompatActivity() {
     private var sessionId: String? = null
     private var currIndex = 0
     private val userSwipes = mutableListOf<Swipe>()
+    private var currentLocation: Location? = null
 
     private val locationPermissionRequest = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -75,13 +76,19 @@ class MatchActivity : AppCompatActivity() {
                 latitude = userLat
                 longitude = userLng
             }
+            this.currentLocation = usedLocation
         }
 
         if (sessionId == null) {
             startNewSoloSession()
         }
         if (usedLocation != null) {
-            viewModel.fetchNearbyRestaurants(usedLocation)
+            val token = TokenManager.getToken(this)
+            if (token != null) {
+                viewModel.fetchUserPreferences(token)
+            } else {
+                viewModel.fetchNearbyRestaurants(usedLocation)
+            }
         } else {
             fetchLocationAndRestaurants()
         }
@@ -100,7 +107,13 @@ class MatchActivity : AppCompatActivity() {
                 fusedLocationClient.getCurrentLocation(com.google.android.gms.location.LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY, null)
                     .addOnSuccessListener { location: Location? ->
                         if (location != null) {
-                            viewModel.fetchNearbyRestaurants(location)
+                            this.currentLocation = location
+                            val token = TokenManager.getToken(this)
+                            if (token != null) {
+                                viewModel.fetchUserPreferences("Bearer $token")
+                            } else {
+                                viewModel.fetchNearbyRestaurants(location)
+                            }
                         } else {
                             Toast.makeText(this, "Could not get location. Please ensure location services are on.", Toast.LENGTH_LONG).show()
                         }
@@ -209,14 +222,22 @@ class MatchActivity : AppCompatActivity() {
     }
 
     private fun observeViewModel() {
-        viewModel.restaurants.observe(this) { list ->
-            if (list != null && list.isNotEmpty()) {
-                restaurants = list
-                currIndex = 0
-                binding.cardContainer.removeAllViews()
-                showNextCard()
-            } else {
-                binding.matchTitle.text = "No restaurants found nearby."
+        viewModel.restaurants.observe(this) { result ->
+            when (result) {
+                is ApiResult.Loading -> { /* Show loading state */ }
+                is ApiResult.Success -> {
+                    if (result.data.isNotEmpty()) {
+                        restaurants = result.data
+                        currIndex = 0
+                        binding.cardContainer.removeAllViews()
+                        showNextCard()
+                    } else {
+                        binding.matchTitle.text = "No restaurants found nearby"
+                    }
+                }
+                is ApiResult.Error -> {
+                    Toast.makeText(this, "Error fetching restaurants: ${result.message}", Toast.LENGTH_LONG).show()
+                }
             }
         }
 
@@ -282,6 +303,21 @@ class MatchActivity : AppCompatActivity() {
                 }
                 is ApiResult.Error -> {
                     Toast.makeText(this, "Error getting match result: ${result.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+
+        viewModel.preferences.observe(this) { result ->
+            when (result) {
+                is ApiResult.Loading -> {  }
+                is ApiResult.Success -> {
+                    // Once preferences are fetched, use them to get restaurants
+                    if (currentLocation != null) {
+                        viewModel.fetchNearbyRestaurants(currentLocation!!, result.data)
+                    }
+                }
+                is ApiResult.Error -> {
+                    Toast.makeText(this, "Error fetching preferences: ${result.message}", Toast.LENGTH_LONG).show()
                 }
             }
         }
