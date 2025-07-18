@@ -1,4 +1,4 @@
-package com.mealmatch.ui
+package com.mealmatch.ui.feed
 
 import android.os.Bundle
 import androidx.fragment.app.Fragment
@@ -13,9 +13,10 @@ import com.mealmatch.R
 import com.mealmatch.data.model.Post
 import com.mealmatch.data.model.PostUser
 import com.mealmatch.data.network.ApiClient
-import com.mealmatch.ui.feed.PostAdapter
 import kotlinx.coroutines.*
 import com.mealmatch.data.local.TokenManager
+import android.text.TextWatcher
+import android.text.Editable
 
 
 class HomeFragment : Fragment() {
@@ -24,12 +25,14 @@ class HomeFragment : Fragment() {
     private lateinit var ratingBar: RatingBar
     private lateinit var postButton: Button
     private lateinit var postRecyclerView: RecyclerView
+    private lateinit var postErrorText: TextView
     private lateinit var postAdapter: PostAdapter
     private val posts = mutableListOf<Post>()
 
     private val api = ApiClient.postApiService
     private val job = Job()
     private val scope = CoroutineScope(Dispatchers.IO + job)
+    private var currentErrorType: String? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -41,6 +44,7 @@ class HomeFragment : Fragment() {
         ratingBar = view.findViewById(R.id.writeRatingBar)
         postButton = view.findViewById(R.id.postButton)
         postRecyclerView = view.findViewById(R.id.homeRecyclerView)
+        postErrorText = view.findViewById(R.id.postErrorText)
 
         postAdapter = PostAdapter(posts)
         postRecyclerView.layoutManager = LinearLayoutManager(requireContext())
@@ -48,10 +52,55 @@ class HomeFragment : Fragment() {
 
         postButton.setOnClickListener {
             val caption = captionInput.text.toString().trim()
-            if (caption.isNotEmpty()) {
+            val rating = ratingBar.rating
+
+            if (caption.isEmpty() && rating == 0f) {
+                postErrorText.setText(R.string.both_required)
+                postErrorText.visibility = View.VISIBLE
+                currentErrorType = "both"
+            }
+            else if (rating == 0f) {
+                postErrorText.setText(R.string.rating_required)
+                postErrorText.visibility = View.VISIBLE
+                currentErrorType = "rating"
+            }
+            else if (caption.isEmpty()) {
+                postErrorText.setText(R.string.caption_required)
+                postErrorText.visibility = View.VISIBLE
+                currentErrorType = "caption"
+            }
+            else {
+                postErrorText.visibility = View.GONE
+                currentErrorType = null
                 createPost(caption)
-            } else {
-                showToast("Please enter a caption")
+            }
+        }
+
+        captionInput.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                if (currentErrorType == "caption") {
+                    postErrorText.visibility = View.GONE
+                    currentErrorType = null
+                }
+                else if (currentErrorType == "both" && ratingBar.rating != 0f) {
+                    postErrorText.visibility = View.GONE
+                    currentErrorType = null
+                }
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        })
+
+        ratingBar.setOnRatingBarChangeListener { _, _, _ ->
+            val caption = captionInput.text.toString().trim()
+
+            if (currentErrorType == "rating") {
+                postErrorText.visibility = View.GONE
+                currentErrorType = null
+            }
+            else if (currentErrorType == "both" && caption.isNotEmpty()) {
+                postErrorText.visibility = View.GONE
+                currentErrorType = null
             }
         }
 
