@@ -8,7 +8,7 @@
     android:layout_marginStart="8dp"
     android:layout_marginEnd="8dp"
     android:background="@android:color/white"
-    tools:context=".ui.HomeFragment">
+    tools:context=".ui.feed.HomeFragment">
 
     <TextView
         android:id="@+id/homeTextView"
@@ -79,13 +79,43 @@
                 android:scaleY="1"
                 android:stepSize="0.5" />
 
-            <Button
-                android:id="@+id/postButton"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/create_post"
-                android:layout_gravity="end"
-                android:layout_marginTop="8dp" />
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp">
+
+                <Button
+                    android:id="@+id/clearButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Clear"
+                    android:layout_gravity="start"
+                    android:backgroundTint="@color/quantum_grey800" />
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="6" />
+
+                <Button
+                    android:id="@+id/postButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/create_post"
+                    android:layout_gravity="end"
+                    android:layout_marginTop="8dp" />
+
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/postErrorText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@android:color/holo_red_dark"
+                android:visibility="gone"
+                android:textSize="14sp"
+                android:paddingTop="4dp" />
 
         </LinearLayout>
     </androidx.cardview.widget.CardView>

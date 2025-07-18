@@ -8,7 +8,7 @@
     <!-- Home Page Fragment -->
     <fragment
         android:id="@+id/homeFragment"
-        android:name="com.mealmatch.ui.HomeFragment"
+        android:name="com.mealmatch.ui.feed.HomeFragment"
         android:label="@string/home_page_label"
         tools:layout="@layout/fragment_home" />
 
