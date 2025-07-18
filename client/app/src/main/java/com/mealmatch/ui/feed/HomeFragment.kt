@@ -26,6 +26,7 @@ class HomeFragment : Fragment() {
     private lateinit var postButton: Button
     private lateinit var postRecyclerView: RecyclerView
     private lateinit var postErrorText: TextView
+    private lateinit var clearButton: Button
     private lateinit var postAdapter: PostAdapter
     private val posts = mutableListOf<Post>()
 
@@ -45,6 +46,7 @@ class HomeFragment : Fragment() {
         postButton = view.findViewById(R.id.postButton)
         postRecyclerView = view.findViewById(R.id.homeRecyclerView)
         postErrorText = view.findViewById(R.id.postErrorText)
+        clearButton = view.findViewById(R.id.clearButton)
 
         postAdapter = PostAdapter(posts)
         postRecyclerView.layoutManager = LinearLayoutManager(requireContext())
@@ -102,6 +104,12 @@ class HomeFragment : Fragment() {
                 postErrorText.visibility = View.GONE
                 currentErrorType = null
             }
+        }
+
+        clearButton.setOnClickListener {
+            captionInput.text.clear()
+            ratingBar.rating = 0f
+            postErrorText.visibility = View.GONE
         }
 
         loadPosts()
