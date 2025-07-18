@@ -261,7 +261,7 @@ class MatchViewModel (application: Application) : AndroidViewModel(application) 
                 }
             }
 
-            val finalMatch = cuisineMatch || dietaryMatch || ambianceMatch || budgetMatch
+            val finalMatch = (cuisineMatch || dietaryMatch || ambianceMatch) && budgetMatch
 
             Log.d("FilterDebug", "  - Checking '${restaurant.name}': Cuisine? $cuisineMatch, Dietary? $dietaryMatch, Ambiance? $ambianceMatch, Budget? $budgetMatch -> Final? $finalMatch")
 
