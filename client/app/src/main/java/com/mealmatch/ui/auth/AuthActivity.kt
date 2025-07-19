@@ -29,6 +29,7 @@ class AuthActivity : AppCompatActivity() {
         val passwordField = findViewById<EditText>(R.id.editTextPassword)
         val actionButton = findViewById<Button>(R.id.buttonAction)
         val switchModeTextView = findViewById<TextView>(R.id.switchModeTextView)
+        val authErrorText = findViewById<TextView>(R.id.authErrorText)
 
         actionButton.setOnClickListener {
             val email = emailField.text.toString().trim()
@@ -36,15 +37,18 @@ class AuthActivity : AppCompatActivity() {
 
             when {
                 email.isEmpty() || password.isEmpty() -> {
-                    Toast.makeText(this, "Email and password cannot be empty", Toast.LENGTH_SHORT).show()
+                    authErrorText.setText(R.string.login_fields_required)
+                    authErrorText.visibility = View.VISIBLE
                     return@setOnClickListener
                 }
                 !Patterns.EMAIL_ADDRESS.matcher(email).matches() -> {
-                    Toast.makeText(this, "Please enter a valid email address", Toast.LENGTH_SHORT).show()
+                    authErrorText.setText(R.string.valid_email)
+                    authErrorText.visibility = View.VISIBLE
                     return@setOnClickListener
                 }
                 password.length < 6 -> {
-                    Toast.makeText(this, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show()
+                    authErrorText.setText(R.string.valid_password)
+                    authErrorText.visibility = View.VISIBLE
                     return@setOnClickListener
                 }
             }
@@ -54,7 +58,8 @@ class AuthActivity : AppCompatActivity() {
             } else {
                 val username = usernameField.text.toString().trim()
                 if (username.isEmpty()) {
-                    Toast.makeText(this, "Username cannot be empty", Toast.LENGTH_SHORT).show()
+                    authErrorText.setText(R.string.username_required)
+                    authErrorText.visibility = View.VISIBLE
                     return@setOnClickListener
                 }
                 viewModel.signUp(username, email, password)
@@ -80,10 +85,13 @@ class AuthActivity : AppCompatActivity() {
     }
 
     private fun observeViewModel() {
+        val authErrorText = findViewById<TextView>(R.id.authErrorText)
+
         viewModel.authResult.observe(this) { result ->
             when (result) {
                 is ApiResult.Loading -> {
                     Toast.makeText(this, "Loading...", Toast.LENGTH_SHORT).show()
+                    authErrorText.visibility = View.GONE
                 }
                 is ApiResult.Success -> {
                     Toast.makeText(this, "Success!", Toast.LENGTH_SHORT).show()
@@ -93,7 +101,12 @@ class AuthActivity : AppCompatActivity() {
                     goToMainApp()
                 }
                 is ApiResult.Error -> {
-                    Toast.makeText(this, "Error: ${result.message}", Toast.LENGTH_LONG).show()
+                    authErrorText.text = when {
+                        result.message.contains("email", ignoreCase = true) -> "No account found with this email."
+                        result.message.contains("password", ignoreCase = true) -> "Incorrect password. Please try again."
+                        else -> result.message
+                    }
+                    authErrorText.visibility = View.VISIBLE
                 }
             }
         }

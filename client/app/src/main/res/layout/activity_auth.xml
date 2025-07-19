@@ -40,6 +40,15 @@
         android:inputType="textPassword"
         android:layout_marginBottom="16dp"/>
 
+    <TextView
+        android:id="@+id/authErrorText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@android:color/holo_red_dark"
+        android:visibility="gone"
+        android:textSize="14sp"
+        android:paddingBottom="4dp" />
+
     <Button
         android:id="@+id/buttonAction"
         android:layout_width="match_parent"
