@@ -20,5 +20,9 @@
     <string name="caption_required">Please enter a caption!</string>
     <string name="rating_required">Please enter a rating!</string>
     <string name="both_required">Please enter a caption and rating!</string>
+    <string name="login_fields_required">Please enter both email and password</string>
+    <string name="valid_email">Please enter a valid email address</string>
+    <string name="valid_password">Password must be at least 6 characters</string>
+    <string name="username_required">Username cannot be empty</string>
 
 </resources>

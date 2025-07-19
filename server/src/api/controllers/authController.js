@@ -18,9 +18,13 @@ export const login = async (req, res) => {
 
     const user = await User.findOne({ email }).select("+password");
 
-    if (!user || !(await user.matchPassword(password))) {
-      return response(res, "Invalid Credentials", 401, false);
+    if (!user) {
+      return response(res, "Invalid Email", 401, false);
     }
+
+    if (!(await user.matchPassword(password))) {
+          return response(res, "Invalid Password", 401, false);
+        }
 
     const token = jwt.sign({ id: user._id }, jwtSecret, {
       expiresIn: jwtExpiresIn,
