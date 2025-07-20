@@ -14,11 +14,18 @@
     <string name="title_match">Match</string>
     <string name="next">Next</string>
     <string name="previous">Previous</string>
+
     <string name="home_page_description">Home feed content</string>
     <string name="write_post">How was your dining experience?</string>
     <string name="create_post">Post!</string>
     <string name="caption_required">Please enter a caption!</string>
     <string name="rating_required">Please enter a rating!</string>
+    <string name="clear_button">Clear</string>
+    <string name="delete_button">Delete Post</string>
+    <string name="temp_user">Username</string>
+    <string name="temp_caption">Delicious ramen here!</string>
+
+
     <string name="both_required">Please enter a caption and rating!</string>
     <string name="login_fields_required">Please enter both email and password</string>
     <string name="valid_email">Please enter a valid email address</string>

@@ -54,7 +54,6 @@ object ApiClient {
         retrofit.create(SessionApiService::class.java)
     }
 
-
     val friendApiService: FriendApiService by lazy {
         retrofit.create(FriendApiService::class.java)
     }
