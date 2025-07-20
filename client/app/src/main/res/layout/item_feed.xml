@@ -10,41 +10,46 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:padding="16dp">
+    android:layout_height="wrap_content"
+    android:padding="0dp">
 
         <TextView
             android:id="@+id/text_user"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Username"
+            android:text="@string/temp_user"
             android:textStyle="bold"
             android:textSize="16sp"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="16dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp" />
 
         <TextView
             android:id="@+id/text_caption"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Delicious ramen here!"
+            android:text="@string/temp_caption"
             android:textSize="14sp"
             app:layout_constraintTop_toBottomOf="@id/text_user"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginTop="4dp"/>
+            android:layout_marginTop="4dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp" />
 
         <RatingBar
             android:id="@+id/rating_bar"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="45dp"
             android:numStars="5"
             android:stepSize="0.5"
             android:isIndicator="true"
-            android:layout_marginTop="1dp"
-            android:scaleX="0.6"
-            android:scaleY="0.6"
+            android:layout_marginTop="2dp"
+            android:scaleX="0.8"
+            android:scaleY="0.8"
             app:layout_constraintTop_toBottomOf="@id/text_caption"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
@@ -59,6 +64,31 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/rating_bar" />
+
+        <ImageButton
+            android:id="@+id/button_delete"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/delete_button"
+            android:src="@drawable/delete"
+            app:layout_constraintTop_toBottomOf="@id/rating_bar"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="-10dp"
+            android:layout_marginEnd="10dp"
+            android:layout_marginBottom="3dp"
+             />
+
+        <View
+            android:id="@+id/bottom_spacer"
+            android:layout_width="0dp"
+            android:layout_height="16dp"
+            android:visibility="invisible"
+            app:layout_constraintTop_toBottomOf="@id/rating_bar"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.cardview.widget.CardView>

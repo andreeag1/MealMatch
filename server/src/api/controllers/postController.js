@@ -50,12 +50,21 @@ export const createPost = async (req, res) => {
  */
 export const deletePost = async (req, res) => {
   try {
-    const deletedPost = await Post.findByIdAndDelete(req.params.id);
-    if (deletedPost) {
-      return response(res, "Post deleted successfully", 200, true);
-    } else {
-      return response(res, "Post not found", 404, false);
+    const postId = req.params.id;
+    const userId = req.user._id;
+    const post = await Post.findById(postId);
+
+    if (!post) {
+          return response(res, "Post not found", 404, false);
     }
+
+    if (post.user.toString() !== userId.toString()) {
+      return response(res, "Unauthorized: You can only delete your own posts", 403, false);
+    }
+
+    await Post.findByIdAndDelete(postId);
+    return response(res, "Post deleted successfully", 200, true);
+
   } catch (error) {
     return response(res, "Internal server error", 500, false, {
       error: error.message,

@@ -17,7 +17,7 @@ import kotlinx.coroutines.*
 import com.mealmatch.data.local.TokenManager
 import android.text.TextWatcher
 import android.text.Editable
-
+import androidx.appcompat.app.AlertDialog
 
 class HomeFragment : Fragment() {
 
@@ -28,6 +28,7 @@ class HomeFragment : Fragment() {
     private lateinit var postErrorText: TextView
     private lateinit var clearButton: Button
     private lateinit var postAdapter: PostAdapter
+    private lateinit var currentUsername: String
     private val posts = mutableListOf<Post>()
 
     private val api = ApiClient.postApiService
@@ -48,7 +49,12 @@ class HomeFragment : Fragment() {
         postErrorText = view.findViewById(R.id.postErrorText)
         clearButton = view.findViewById(R.id.clearButton)
 
-        postAdapter = PostAdapter(posts)
+        val prefs = requireContext().getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        currentUsername = prefs.getString("username", null) ?: ""
+
+        postAdapter = PostAdapter(posts, currentUsername) { post ->
+            deletePost(post)
+        }
         postRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         postRecyclerView.adapter = postAdapter
 
@@ -170,6 +176,43 @@ class HomeFragment : Fragment() {
                     }
                 } else {
                     showToast("Failed to create post")
+                }
+            } catch (e: Exception) {
+                showToast("Error: ${e.message}")
+            }
+        }
+    }
+
+    private fun deletePost(post: Post) {
+        showDeleteConfirmationDialog(post)
+    }
+
+    private fun showDeleteConfirmationDialog(post: Post) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Delete Post")
+            .setMessage("Are you sure you want to delete this post? This action cannot be undone.")
+            .setPositiveButton("Delete") { dialog, _ ->
+                performDeletePost(post)
+                dialog.dismiss()
+            }
+            .setNegativeButton("Cancel") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
+    }
+
+    private fun performDeletePost(post: Post) {
+        scope.launch {
+            try {
+                val response = api.deletePost("Bearer ${getToken()}", post._id!!)
+                if (response.isSuccessful && response.body()?.success == true) {
+                    withContext(Dispatchers.Main) {
+                        posts.remove(post)
+                        postAdapter.notifyDataSetChanged()
+                        showToast("Post deleted")
+                    }
+                } else {
+                    showToast("Failed to delete post")
                 }
             } catch (e: Exception) {
                 showToast("Error: ${e.message}")
