@@ -136,12 +136,18 @@ class HomeFragment : Fragment() {
             postErrorText.visibility = View.GONE
         }
 
-        mediaAdapter = MediaAdapter(selectedMedia) { position ->
-            removeMediaAt(position)
-        }
+        mediaAdapter = MediaAdapter(
+            selectedMedia,
+            { position -> removeMediaAt(position) },
+            true,
+            R.layout.item_media
+        )
 
         mediaRecyclerView.layoutManager = GridLayoutManager(requireContext(), 3)
         mediaRecyclerView.adapter = mediaAdapter
+
+        val spacingInPixels = resources.getDimensionPixelSize(R.dimen.media_item_spacing)
+        mediaRecyclerView.addItemDecoration(GridSpacing(3, spacingInPixels))
 
         buttonAddMedia.setOnClickListener {
             getContent.launch("*/*")
@@ -277,13 +283,20 @@ class HomeFragment : Fragment() {
     }
 
     private fun removeMediaAt(position: Int) {
+        if (position < 0 || position >= selectedMedia.size) return
+
         val media = selectedMedia[position]
         FirebaseMediaManager.deleteMedia(
             storagePath = media.storagePath,
             onSuccess = {
-                selectedMedia.removeAt(position)
-                mediaAdapter.notifyItemRemoved(position)
-                updateMediaRecyclerViewVisibility()
+                if (position < selectedMedia.size) {
+                    selectedMedia.removeAt(position)
+                    mediaAdapter.notifyItemRemoved(position)
+                    if (selectedMedia.isEmpty()) {
+                        mediaAdapter.notifyDataSetChanged()
+                    }
+                    updateMediaRecyclerViewVisibility()
+                }
             },
             onFailure = { exception ->
                 showToast("Error deleting media: ${exception.message}")

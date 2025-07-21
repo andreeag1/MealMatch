@@ -25,6 +25,7 @@
     <string name="temp_user">Username</string>
     <string name="temp_caption">Delicious ramen here!</string>
     <string name="media_button">Add Photos/Videos</string>
+    <string name="close_video">Close Video</string>
 
     <string name="both_required">Please enter a caption and rating!</string>
     <string name="login_fields_required">Please enter both email and password</string>

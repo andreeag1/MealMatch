@@ -39,9 +39,17 @@ class PostAdapter(
 
         if (post.media.isNotEmpty()) {
             holder.postMediaRecyclerView.visibility = View.VISIBLE
-            val mediaAdapter = MediaAdapter(post.media.toMutableList()) { }
-            holder.postMediaRecyclerView.layoutManager = GridLayoutManager(holder.itemView.context, 3)
+            val spanCount = if (post.media.size == 1) 1 else 3
+            val mediaAdapter = MediaAdapter(
+                post.media.toMutableList(),
+                {},
+                false,
+                R.layout.item_media_in_feed
+            )
+
+            holder.postMediaRecyclerView.layoutManager = GridLayoutManager(holder.itemView.context, spanCount)
             holder.postMediaRecyclerView.adapter = mediaAdapter
+
         } else {
             holder.postMediaRecyclerView.visibility = View.GONE
         }

@@ -56,13 +56,15 @@
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/postMediaRecyclerView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_width="0dp"
+            android:layout_height="120dp"
             android:layout_marginTop="8dp"
             android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/rating_bar" />
+            app:layout_constraintTop_toBottomOf="@id/rating_bar"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp" />
 
         <ImageButton
             android:id="@+id/button_delete"
@@ -71,13 +73,12 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/delete_button"
             android:src="@drawable/delete"
-            app:layout_constraintTop_toBottomOf="@id/rating_bar"
+            app:layout_constraintTop_toBottomOf="@id/postMediaRecyclerView"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginTop="-10dp"
+            android:layout_marginTop="-5dp"
             android:layout_marginEnd="10dp"
-            android:layout_marginBottom="3dp"
-             />
+            android:layout_marginBottom="3dp" />
 
         <View
             android:id="@+id/bottom_spacer"
