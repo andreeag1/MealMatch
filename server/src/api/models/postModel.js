@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import mediaSchema from "./mediaModel.js";
 
 const postSchema = new mongoose.Schema(
   {
@@ -12,10 +13,7 @@ const postSchema = new mongoose.Schema(
       required: true,
       default: 0,
     },
-    imageUrl: {
-      type: String,
-      default: null,
-    },
+    media: [mediaSchema],
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

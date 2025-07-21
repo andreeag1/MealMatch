@@ -18,6 +18,11 @@ import com.mealmatch.data.local.TokenManager
 import android.text.TextWatcher
 import android.text.Editable
 import androidx.appcompat.app.AlertDialog
+import android.net.Uri
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.recyclerview.widget.GridLayoutManager
+import com.mealmatch.data.model.Media
+import com.mealmatch.data.network.FirebaseMediaManager
 
 class HomeFragment : Fragment() {
 
@@ -31,10 +36,21 @@ class HomeFragment : Fragment() {
     private lateinit var currentUsername: String
     private val posts = mutableListOf<Post>()
 
+    private lateinit var mediaRecyclerView: RecyclerView
+    private lateinit var buttonAddMedia: Button
+    private lateinit var mediaAdapter: MediaAdapter
+    private val selectedMedia = mutableListOf<Media>()
+
     private val api = ApiClient.postApiService
     private val job = Job()
     private val scope = CoroutineScope(Dispatchers.IO + job)
     private var currentErrorType: String? = null
+
+    private val getContent = registerForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
+        if (!uris.isNullOrEmpty()) {
+            uploadMultipleMediaFiles(uris)
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -48,6 +64,8 @@ class HomeFragment : Fragment() {
         postRecyclerView = view.findViewById(R.id.homeRecyclerView)
         postErrorText = view.findViewById(R.id.postErrorText)
         clearButton = view.findViewById(R.id.clearButton)
+        mediaRecyclerView = view.findViewById(R.id.mediaRecyclerView)
+        buttonAddMedia = view.findViewById(R.id.mediaButton)
 
         val prefs = requireContext().getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
         currentUsername = prefs.getString("username", null) ?: ""
@@ -118,6 +136,17 @@ class HomeFragment : Fragment() {
             postErrorText.visibility = View.GONE
         }
 
+        mediaAdapter = MediaAdapter(selectedMedia) { position ->
+            removeMediaAt(position)
+        }
+
+        mediaRecyclerView.layoutManager = GridLayoutManager(requireContext(), 3)
+        mediaRecyclerView.adapter = mediaAdapter
+
+        buttonAddMedia.setOnClickListener {
+            getContent.launch("*/*")
+        }
+
         loadPosts()
         return view
     }
@@ -163,7 +192,7 @@ class HomeFragment : Fragment() {
                     _id = null,
                     caption = caption,
                     rating = ratingValue,
-                    imageUrl = null,
+                    media = selectedMedia.toList(),
                     user = currentUser
                 )
                 val response = api.createPost("Bearer ${getToken()}", newPost)
@@ -171,6 +200,9 @@ class HomeFragment : Fragment() {
                     withContext(Dispatchers.Main) {
                         captionInput.text.clear()
                         ratingBar.rating = 0f
+                        selectedMedia.clear()
+                        mediaAdapter.notifyDataSetChanged()
+                        updateMediaRecyclerViewVisibility()
                         loadPosts()
                         showToast("Post created")
                     }
@@ -217,6 +249,53 @@ class HomeFragment : Fragment() {
             } catch (e: Exception) {
                 showToast("Error: ${e.message}")
             }
+        }
+    }
+
+    private fun uploadMultipleMediaFiles(uris: List<Uri>) {
+        val userId = currentUsername
+        uris.forEach { uri ->
+            val mimeType = requireContext().contentResolver.getType(uri) ?: "image/jpeg"
+            val type = if (mimeType.startsWith("video")) "video" else "image"
+            val storagePath = "posts/$userId/${System.currentTimeMillis()}_${uri.lastPathSegment}"
+
+            FirebaseMediaManager.uploadMedia(
+                uri = uri,
+                storagePath = storagePath,
+                onSuccess = { downloadUrl ->
+                    val media = Media(url = downloadUrl, type = type, storagePath = storagePath)
+                    selectedMedia.add(media)
+                    mediaAdapter.notifyItemInserted(selectedMedia.size - 1)
+                    updateMediaRecyclerViewVisibility()
+                    showToast("Media uploaded successfully")
+                },
+                onFailure = { exception ->
+                    showToast("Error uploading media: ${exception.message}")
+                }
+            )
+        }
+    }
+
+    private fun removeMediaAt(position: Int) {
+        val media = selectedMedia[position]
+        FirebaseMediaManager.deleteMedia(
+            storagePath = media.storagePath,
+            onSuccess = {
+                selectedMedia.removeAt(position)
+                mediaAdapter.notifyItemRemoved(position)
+                updateMediaRecyclerViewVisibility()
+            },
+            onFailure = { exception ->
+                showToast("Error deleting media: ${exception.message}")
+            }
+        )
+    }
+
+    private fun updateMediaRecyclerViewVisibility() {
+        if (selectedMedia.isNotEmpty()) {
+            mediaRecyclerView.visibility = View.VISIBLE
+        } else {
+            mediaRecyclerView.visibility = View.GONE
         }
     }
 

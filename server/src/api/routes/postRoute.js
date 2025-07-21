@@ -2,7 +2,7 @@ import express from "express";
 import {
   getAllPosts,
   createPost,
-  deletePost,
+  deletePost
 } from "../controllers/postController.js";
 import authMiddleware from "../middlewares/authMiddleware.js";
 

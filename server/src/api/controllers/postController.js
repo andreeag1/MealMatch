@@ -1,5 +1,6 @@
 import response from "../helpers/response.js";
 import Post from "../models/postModel.js";
+import admin from "../../config/firebase.js";
 
 /**
  * @desc Get all posts
@@ -8,6 +9,7 @@ import Post from "../models/postModel.js";
 export const getAllPosts = async (req, res) => {
   try {
     const posts = await Post.find().populate("user", "username").sort({ createdAt: -1 });
+
     return response(res, "List of Posts", 200, true, posts);
   } catch (error) {
     return response(res, "Internal server error", 500, false, {
@@ -22,14 +24,13 @@ export const getAllPosts = async (req, res) => {
  */
 export const createPost = async (req, res) => {
   try {
-    const { caption, rating, imageUrl } = req.body;
+    const { caption, rating, media } = req.body;
     const userId = req.user._id;
-
 
     const newPost = new Post({
       caption,
       rating,
-      imageUrl,
+      media: media || [],
       user: userId,
     });
 
@@ -60,6 +61,18 @@ export const deletePost = async (req, res) => {
 
     if (post.user.toString() !== userId.toString()) {
       return response(res, "Unauthorized: You can only delete your own posts", 403, false);
+    }
+
+    if (post.media && post.media.length > 0) {
+      for (const mediaItem of post.media) {
+        if (mediaItem.storagePath) {
+          try {
+            await admin.storage().bucket().file(mediaItem.storagePath).delete();
+          } catch (error) {
+            console.error('Error deleting media from Firebase:', error);
+          }
+        }
+      }
     }
 
     await Post.findByIdAndDelete(postId);

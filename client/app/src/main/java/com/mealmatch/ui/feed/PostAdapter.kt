@@ -3,13 +3,13 @@ package com.mealmatch.ui.feed
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
 import android.widget.RatingBar
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.mealmatch.R
 import com.mealmatch.data.model.Post
 import android.widget.ImageButton
+import androidx.recyclerview.widget.GridLayoutManager
 
 class PostAdapter(
     private val postList: List<Post>,
@@ -21,7 +21,7 @@ class PostAdapter(
         val username: TextView = view.findViewById(R.id.text_user)
         val caption: TextView = view.findViewById(R.id.text_caption)
         val ratingBar: RatingBar = view.findViewById(R.id.rating_bar)
-        val image: ImageView = view.findViewById(R.id.image_photo)
+        val postMediaRecyclerView: RecyclerView = view.findViewById(R.id.postMediaRecyclerView)
         val deleteButton: ImageButton = view.findViewById(R.id.button_delete)
     }
 
@@ -36,7 +36,15 @@ class PostAdapter(
         holder.username.text = post.user?.username ?: "Unknown User"
         holder.caption.text = post.caption
         holder.ratingBar.rating = post.rating
-        holder.image.visibility = View.GONE // for now
+
+        if (post.media.isNotEmpty()) {
+            holder.postMediaRecyclerView.visibility = View.VISIBLE
+            val mediaAdapter = MediaAdapter(post.media.toMutableList()) { }
+            holder.postMediaRecyclerView.layoutManager = GridLayoutManager(holder.itemView.context, 3)
+            holder.postMediaRecyclerView.adapter = mediaAdapter
+        } else {
+            holder.postMediaRecyclerView.visibility = View.GONE
+        }
 
         if (post.user?.username == currentUsername) {
             holder.deleteButton.visibility = View.VISIBLE
