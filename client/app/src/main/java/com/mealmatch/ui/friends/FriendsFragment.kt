@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.fragment.app.activityViewModels
 import com.mealmatch.databinding.FragmentFriendsBinding
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -18,15 +19,16 @@ import com.mealmatch.data.local.TokenManager
 import com.mealmatch.ui.chat.ChatActivity
 import com.mealmatch.data.model.FriendModel as Friend
 
+
 class FriendsFragment : Fragment() {
     private var _binding: FragmentFriendsBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: FriendsViewModel by viewModels()
+    private val viewModel: FriendsViewModel by activityViewModels()
 
     private lateinit var groupChatsAdapter: GroupChatsAdapter
     private lateinit var groupCreationFriendsAdapter: FriendsAdapter
-    private lateinit var friendsListAdapter: FriendsAdapter
+//    private lateinit var friendsListAdapter: FriendsAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -34,6 +36,15 @@ class FriendsFragment : Fragment() {
     ): View {
         _binding = FragmentFriendsBinding.inflate(inflater, container, false)
         return binding.root
+    }
+
+    // Add this entire function to your FriendsFragment.kt file
+    override fun onResume() {
+        super.onResume()
+        // This will be called every time the fragment becomes active,
+        // including when you close the "Add Friends Pop-up".
+        // It ensures your friend and group lists are always up-to-date.
+        fetchFriendsAndGroups()
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -73,22 +84,26 @@ class FriendsFragment : Fragment() {
         rvGroupChats.layoutManager = LinearLayoutManager(context)
         rvGroupChats.adapter = groupChatsAdapter
 
-        val rvFriendsList = view.findViewById<RecyclerView>(R.id.recyclerViewFriendsList)
-        friendsListAdapter = FriendsAdapter(
-            friends = listOf(),
-            allowSelection = false,
-            allowRemoval = true
-        ) { friend ->
-            val token = TokenManager.getToken(requireContext()) ?: return@FriendsAdapter
-            viewModel.removeFriend("Bearer $token", friend.username)
-        }
-        rvFriendsList.layoutManager = LinearLayoutManager(context)
-        rvFriendsList.adapter = friendsListAdapter
+//        val rvFriendsList = view.findViewById<RecyclerView>(R.id.recyclerViewFriendsList)
+//        friendsListAdapter = FriendsAdapter(
+//            friends = listOf(),
+//            allowSelection = false,
+//            allowRemoval = true
+//        ) { friend ->
+//            val token = TokenManager.getToken(requireContext()) ?: return@FriendsAdapter
+//            viewModel.removeFriend("Bearer $token", friend.username)
+//        }
+//        rvFriendsList.layoutManager = LinearLayoutManager(context)
+//        rvFriendsList.adapter = friendsListAdapter
     }
 
     private fun setupClickListeners(view: View) {
         val groupNameEditText = view.findViewById<TextInputEditText>(R.id.editTextGroupName)
         val createGroupButton = view.findViewById<Button>(R.id.buttonCreateGroup)
+
+        binding.buttonManageFriends.setOnClickListener {
+            FriendsDialogFragment().show(childFragmentManager, "FriendsDialogFragment")
+        }
 
         createGroupButton.setOnClickListener {
             val groupName = groupNameEditText.text.toString().trim()
@@ -115,21 +130,21 @@ class FriendsFragment : Fragment() {
             viewModel.createGroup(authToken, groupName, memberUsernames)
         }
 
-        val addFriendButton = view.findViewById<Button>(R.id.buttonAddFriend)
-        val friendUsernameInput = view.findViewById<TextInputEditText>(R.id.editTextAddFriend)
-
-        addFriendButton.setOnClickListener {
-            val username = friendUsernameInput.text.toString().trim()
-            val token = TokenManager.getToken(requireContext())
-
-            if (username.isNotEmpty() && token != null) {
-                viewModel.addFriend("Bearer $token", username)
-                friendUsernameInput.text?.clear()
-                Toast.makeText(context, "Adding $username...", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(context, "Please enter a username", Toast.LENGTH_SHORT).show()
-            }
-        }
+//        val addFriendButton = view.findViewById<Button>(R.id.buttonAddFriend)
+//        val friendUsernameInput = view.findViewById<TextInputEditText>(R.id.editTextAddFriend)
+//
+//        addFriendButton.setOnClickListener {
+//            val username = friendUsernameInput.text.toString().trim()
+//            val token = TokenManager.getToken(requireContext())
+//
+//            if (username.isNotEmpty() && token != null) {
+//                viewModel.addFriend("Bearer $token", username)
+//                friendUsernameInput.text?.clear()
+//                Toast.makeText(context, "Adding $username...", Toast.LENGTH_SHORT).show()
+//            } else {
+//                Toast.makeText(context, "Please enter a username", Toast.LENGTH_SHORT).show()
+//            }
+//        }
 
     }
 
@@ -167,7 +182,7 @@ class FriendsFragment : Fragment() {
             when (result) {
                 is ApiResult.Loading -> {}
                 is ApiResult.Success -> {
-                    friendsListAdapter.updateFriends(result.data)
+//                    friendsListAdapter.updateFriends(result.data)
                     groupCreationFriendsAdapter.updateFriends(result.data)
                 }
                 is ApiResult.Error -> {

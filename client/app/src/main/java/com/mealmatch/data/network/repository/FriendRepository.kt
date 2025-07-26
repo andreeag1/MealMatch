@@ -3,7 +3,7 @@ import com.mealmatch.data.model.FriendListResponse
 import com.mealmatch.data.network.ApiClient
 import retrofit2.Response
 import com.mealmatch.data.model.ApiResponse
-
+import com.mealmatch.data.model.FriendRequestsResponse
 
 class FriendRepository {
     private val api = ApiClient.friendApiService
@@ -21,4 +21,21 @@ class FriendRepository {
         return api.removeFriend(token, mapOf("friendUsername" to username))
 
     }
+
+    suspend fun sendFriendRequest(token: String, username: String): Response<Unit> {
+        return api.sendFriendRequest(token, mapOf("username" to username))
+    }
+
+    suspend fun getFriendRequests(token: String, type: String): Response<FriendRequestsResponse> {
+        return api.getFriendRequests(token, type)
+    }
+
+    suspend fun acceptFriendRequest(token: String, requestId: String): Response<Unit> {
+        return api.acceptFriendRequest(token, mapOf("requestId" to requestId))
+    }
+
+    suspend fun declineFriendRequest(token: String, requestId: String): Response<Unit> {
+        return api.declineFriendRequest(token, mapOf("requestId" to requestId))
+    }
+
 }

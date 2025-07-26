@@ -14,45 +14,28 @@
 
         <TextView
             android:id="@+id/textViewTitle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="👥 Friends &amp; Groups"
-            android:textSize="28sp"
-            android:textStyle="bold"
+            android:layout_width="193dp"
+            android:layout_height="39dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginTop="10dp"
+            android:text="Groups &amp; Friends"
             android:textColor="@color/black"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toStartOf="@+id/buttonManageFriends"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/buttonInvite"/>
+            app:layout_constraintTop_toTopOf="parent" />
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/buttonInvite"
-            style="@style/Widget.MaterialComponents.Button.Icon"
-            android:layout_width="35dp"
-            android:layout_height="35dp"
-            android:insetLeft="0dp"
-            android:insetTop="0dp"
-            android:insetRight="0dp"
-            android:insetBottom="0dp"
-            app:icon="@drawable/ic_link"
-            app:iconGravity="start"
-            app:iconPadding="0dp"
-            app:iconSize="20dp"
+            android:id="@+id/buttonManageFriends"
+            style="@style/Widget.Material3.Button.TextButton.Icon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Manage Friends"
+            app:icon="@drawable/ic_person"
             app:layout_constraintBottom_toBottomOf="@id/textViewTitle"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@id/textViewTitle"
-            app:layout_constraintVertical_bias="0.0"
-            app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full" />
-
-        <TextView
-            android:id="@+id/textViewSubtitle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="Connect with friends, manage your groups, and start food adventures!"
-            android:textSize="12sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/textViewTitle" />
+            app:layout_constraintTop_toTopOf="@id/textViewTitle" />
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardCreateGroup"
@@ -63,7 +46,7 @@
             app:cardElevation="4dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/textViewSubtitle">
+            app:layout_constraintTop_toBottomOf="@id/textViewTitle">
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
@@ -109,7 +92,6 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@id/textInputLayoutGroupName" />
 
-                <!-- RecyclerView for selecting friends to add to the group -->
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/recyclerViewAddFriends"
                     android:layout_width="0dp"
@@ -134,6 +116,7 @@
                     app:layout_constraintTop_toBottomOf="@id/recyclerViewAddFriends" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
+
         </com.google.android.material.card.MaterialCardView>
 
         <TextView
@@ -156,70 +139,8 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/textViewYourGroupsTitle"
-            tools:listitem="@layout/item_group_chat"
-            tools:itemCount="2"/>
-
-        <!-- "Your Friends" Section -->
-        <TextView
-            android:id="@+id/textViewYourFriendsTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="Your Friends"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:textColor="@color/black"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/recyclerViewGroupChats" />
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerViewFriendsList"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/textViewYourFriendsTitle"
-            tools:itemCount="3"
-            tools:listitem="@layout/item_friend" />
-
-        <LinearLayout
-            android:id="@+id/addFriendContainer"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:paddingHorizontal="16dp"
-            app:layout_constraintTop_toBottomOf="@id/recyclerViewFriendsList"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent">
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:hint="Enter Friend Username"
-                style="@style/Widget.Material3.TextInputLayout.OutlinedBox.Dense">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/editTextAddFriend"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="text" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/buttonAddFriend"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:text="Add"
-                android:minHeight="48dp"
-                style="@style/Widget.Material3.Button" />
-        </LinearLayout>
-
+            tools:itemCount="2"
+            tools:listitem="@layout/item_group_chat"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

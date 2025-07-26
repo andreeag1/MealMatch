@@ -9,6 +9,8 @@ import com.mealmatch.data.model.CreateGroupRequest
 import com.mealmatch.data.model.GroupResponse
 import com.mealmatch.data.network.repository.GroupRepository
 import kotlinx.coroutines.launch
+import com.mealmatch.data.model.FriendRequest
+
 
 import com.mealmatch.data.network.repository.FriendRepository
 import com.mealmatch.data.model.FriendModel as Friend
@@ -69,6 +71,13 @@ class FriendsViewModel : ViewModel() {
         }
     }
 
+    private val _incomingRequests = MutableLiveData<ApiResult<List<FriendRequest>>>()
+    val incomingRequests: LiveData<ApiResult<List<FriendRequest>>> = _incomingRequests
+
+    private val _outgoingRequests = MutableLiveData<ApiResult<List<FriendRequest>>>()
+    val outgoingRequests: LiveData<ApiResult<List<FriendRequest>>> = _outgoingRequests
+
+
     fun fetchFriends(token: String) {
         _friends.value = ApiResult.Loading
         viewModelScope.launch {
@@ -88,17 +97,33 @@ class FriendsViewModel : ViewModel() {
         }
     }
 
-    fun addFriend(token: String, username: String) {
+//    fun addFriend(token: String, username: String) {
+//        viewModelScope.launch {
+//            try {
+//                val res = friendRepo.addFriend(token, username)
+//                if (res.isSuccessful) fetchFriends(token)
+//                else {
+//                    val errorMsg = res.errorBody()?.string() ?: "Failed to add friend"
+//                    Log.e("AddFriend", errorMsg)
+//                }
+//            } catch (e: Exception) {
+//                Log.e("AddFriend", "Error", e)
+//            }
+//        }
+//    }
+
+    fun sendFriendRequest(token: String, username: String) {
         viewModelScope.launch {
             try {
-                val res = friendRepo.addFriend(token, username)
-                if (res.isSuccessful) fetchFriends(token)
-                else {
-                    val errorMsg = res.errorBody()?.string() ?: "Failed to add friend"
-                    Log.e("AddFriend", errorMsg)
+                val res = friendRepo.sendFriendRequest(token, username)
+                if (res.isSuccessful) {
+                    // Refresh outgoing requests after sending a new one
+                    getFriendRequests(token)
+                } else {
+                    Log.e("sendFriendRequest", res.errorBody()?.string() ?: "Failed to send request")
                 }
             } catch (e: Exception) {
-                Log.e("AddFriend", "Error", e)
+                Log.e("sendFriendRequest", "Error", e)
             }
         }
     }
@@ -114,6 +139,57 @@ class FriendsViewModel : ViewModel() {
                 }
             } catch (e: Exception) {
                 Log.e("RemoveFriend", "Error", e)
+            }
+        }
+    }
+
+    fun getFriendRequests(token: String) {
+        viewModelScope.launch {
+            // Fetch incoming
+            _incomingRequests.value = ApiResult.Loading
+            try {
+                val res = friendRepo.getFriendRequests(token, "incoming")
+                if (res.isSuccessful && res.body()?.success == true) {
+                    _incomingRequests.value = ApiResult.Success(res.body()!!.data)
+                } else {
+                    _incomingRequests.value = ApiResult.Error("Could not fetch incoming requests")
+                }
+            } catch (e: Exception) {
+                _incomingRequests.value = ApiResult.Error(e.message ?: "Network error")
+            }
+
+            // Fetch outgoing
+            _outgoingRequests.value = ApiResult.Loading
+            try {
+                val res = friendRepo.getFriendRequests(token, "outgoing")
+                if (res.isSuccessful && res.body()?.success == true) {
+                    _outgoingRequests.value = ApiResult.Success(res.body()!!.data)
+                } else {
+                    _outgoingRequests.value = ApiResult.Error("Could not fetch outgoing requests")
+                }
+            } catch (e: Exception) {
+                _outgoingRequests.value = ApiResult.Error(e.message ?: "Network error")
+            }
+        }
+    }
+
+    fun acceptFriendRequest(token: String, requestId: String) {
+        viewModelScope.launch {
+            val res = friendRepo.acceptFriendRequest(token, requestId)
+            if (res.isSuccessful) {
+                // Refresh both friends and requests lists
+                fetchFriends(token)
+                getFriendRequests(token)
+            }
+        }
+    }
+
+    fun declineFriendRequest(token: String, requestId: String) {
+        viewModelScope.launch {
+            val res = friendRepo.declineFriendRequest(token, requestId)
+            if (res.isSuccessful) {
+                // Refresh requests lists
+                getFriendRequests(token)
             }
         }
     }
