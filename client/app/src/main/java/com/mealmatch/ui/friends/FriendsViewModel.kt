@@ -75,6 +75,8 @@ class FriendsViewModel : ViewModel() {
     private val _outgoingRequests = MutableLiveData<ApiResult<List<FriendRequest>>>()
     val outgoingRequests: LiveData<ApiResult<List<FriendRequest>>> = _outgoingRequests
 
+    private val _incomingRequestsCount = MutableLiveData<Int>()
+    val incomingRequestsCount: LiveData<Int> = _incomingRequestsCount
 
     fun fetchFriends(token: String) {
         _friends.value = ApiResult.Loading
@@ -132,12 +134,16 @@ class FriendsViewModel : ViewModel() {
             try {
                 val res = friendRepo.getFriendRequests(token, "incoming")
                 if (res.isSuccessful && res.body()?.success == true) {
-                    _incomingRequests.value = ApiResult.Success(res.body()!!.data)
+                    val data = res.body()!!.data
+                    _incomingRequests.value = ApiResult.Success(data)
+                    _incomingRequestsCount.value = data.size
                 } else {
                     _incomingRequests.value = ApiResult.Error("Could not fetch incoming requests")
+                    _incomingRequestsCount.value = 0
                 }
             } catch (e: Exception) {
                 _incomingRequests.value = ApiResult.Error(e.message ?: "Network error")
+                _incomingRequestsCount.value = 0
             }
 
             _outgoingRequests.value = ApiResult.Loading

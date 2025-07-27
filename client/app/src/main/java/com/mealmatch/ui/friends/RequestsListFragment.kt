@@ -51,13 +51,19 @@ class RequestsListFragment : Fragment() {
         val liveData = if (isIncoming) viewModel.incomingRequests else viewModel.outgoingRequests
         liveData.observe(viewLifecycleOwner) { result ->
             when (result) {
-                is ApiResult.Loading -> binding.requestsProgressBar.visibility = View.VISIBLE
+                is ApiResult.Loading -> {}
                 is ApiResult.Success -> {
-                    binding.requestsProgressBar.visibility = View.GONE
                     (binding.requestsRecyclerView.adapter as? RequestsAdapter)?.updateRequests(result.data)
+                    if (result.data.isEmpty()) {
+                        binding.requestsRecyclerView.visibility = View.GONE
+                        binding.emptyStateTextView.visibility = View.VISIBLE
+                        binding.emptyStateTextView.text = if (isIncoming) "No incoming requests" else "No outgoing requests"
+                    } else {
+                        binding.requestsRecyclerView.visibility = View.VISIBLE
+                        binding.emptyStateTextView.visibility = View.GONE
+                    }
                 }
                 is ApiResult.Error -> {
-                    binding.requestsProgressBar.visibility = View.GONE
                     Toast.makeText(context, result.message, Toast.LENGTH_SHORT).show()
                 }
             }

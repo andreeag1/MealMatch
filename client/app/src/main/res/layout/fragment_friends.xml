@@ -22,20 +22,42 @@
             android:textColor="@color/black"
             android:textSize="24sp"
             android:textStyle="bold"
-            app:layout_constraintEnd_toStartOf="@+id/buttonManageFriends"
+            app:layout_constraintEnd_toStartOf="@+id/manageFriendsButtonContainer"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/buttonManageFriends"
-            style="@style/Widget.Material3.Button.TextButton.Icon"
+        <FrameLayout
+            android:id="@+id/manageFriendsButtonContainer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Manage Friends"
-            app:icon="@drawable/ic_person"
             app:layout_constraintBottom_toBottomOf="@id/textViewTitle"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@id/textViewTitle" />
+            app:layout_constraintTop_toTopOf="@id/textViewTitle">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/buttonManageFriends"
+                style="@style/Widget.Material3.Button.TextButton.Icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Manage Friends"
+                app:icon="@drawable/ic_person" />
+
+            <!-- This TextView will act as our notification badge -->
+            <TextView
+                android:id="@+id/friendRequestBadge"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="top|end"
+                android:background="@drawable/badge_background"
+                android:gravity="center"
+                android:textColor="@android:color/white"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                tools:text="3"
+                tools:visibility="visible" />
+
+        </FrameLayout>
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardCreateGroup"

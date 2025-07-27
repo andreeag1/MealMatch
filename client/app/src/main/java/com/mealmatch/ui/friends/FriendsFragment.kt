@@ -54,6 +54,7 @@ class FriendsFragment : Fragment() {
             val authToken = "Bearer $token"
             viewModel.getUserGroups(authToken)
             viewModel.fetchFriends(authToken)
+            viewModel.getFriendRequests(authToken)
         } else {
             Toast.makeText(context, "Not authenticated. Please log in.", Toast.LENGTH_LONG).show()
         }
@@ -153,6 +154,16 @@ class FriendsFragment : Fragment() {
                 }
             }
         }
+
+        viewModel.incomingRequestsCount.observe(viewLifecycleOwner) { count ->
+            if (count > 0) {
+                binding.friendRequestBadge.visibility = View.VISIBLE
+                binding.friendRequestBadge.text = count.toString()
+            } else {
+                binding.friendRequestBadge.visibility = View.GONE
+            }
+        }
+
     }
 
     override fun onDestroyView() {

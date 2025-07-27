@@ -1,5 +1,6 @@
 package com.mealmatch.ui.friends
 
+import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -34,6 +35,7 @@ class FriendsDialogFragment : DialogFragment() {
         super.onViewCreated(view, savedInstanceState)
         setupViewPager()
         setupClickListeners()
+        observeViewModelForBadges()
     }
 
     override fun onResume() {
@@ -82,6 +84,21 @@ class FriendsDialogFragment : DialogFragment() {
         }
         fun getPageTitle(position: Int): String {
             return tabTitles[position]
+        }
+    }
+
+    private fun observeViewModelForBadges() {
+        viewModel.incomingRequestsCount.observe(viewLifecycleOwner) { count ->
+            val incomingTab = binding.tabLayout.getTabAt(1)
+            if (count > 0) {
+                val badge = incomingTab?.orCreateBadge
+                badge?.number = count
+                badge?.backgroundColor = Color.parseColor("#7B1FA2")
+                badge?.horizontalOffsetWithText = 20
+                badge?.verticalOffset = -10
+            } else {
+                incomingTab?.removeBadge()
+            }
         }
     }
 }
