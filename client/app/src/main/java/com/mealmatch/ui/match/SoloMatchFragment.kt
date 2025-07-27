@@ -41,7 +41,7 @@ class SoloMatchFragment : Fragment() {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
         getLocation()
 
-        binding.buttonStartSoloMatch.setOnClickListener {
+        binding.buttonExploreSolo.setOnClickListener {
             val token = TokenManager.getToken(requireContext())
             if (token == null) {
                 Toast.makeText(context, "Authentication Error", Toast.LENGTH_LONG).show()

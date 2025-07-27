@@ -2,6 +2,7 @@ package com.mealmatch.data.network.service
 
 import com.mealmatch.data.model.ApiResponse
 import com.mealmatch.data.model.UserPreferences
+import com.mealmatch.data.model.UserProfileResponse
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -19,4 +20,9 @@ interface ProfilePrefApiService {
     suspend fun getProfilePref(
         @Header("Authorization") token: String
     ): Response<ApiResponse<UserPreferences>>
+
+    @GET("api/users/me")
+    suspend fun getMyProfile(
+        @Header("Authorization") token: String,
+    ): Response<ApiResponse<UserProfileResponse>>
 }

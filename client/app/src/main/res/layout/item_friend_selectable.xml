@@ -47,7 +47,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:tint="@color/design_default_color_primary"
+        app:tint="@color/brand_primary"
         tools:visibility="visible"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

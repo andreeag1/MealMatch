@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:layout_marginStart="8dp"
     android:layout_marginEnd="8dp"
-    android:background="@android:color/white"
+    android:background="@color/brand_background"
     tools:context=".ui.feed.HomeFragment">
 
     <TextView
@@ -17,7 +17,7 @@
         android:paddingTop="60dp"
         android:paddingBottom="8dp"
         android:text="@string/home_page_label"
-        android:textColor="@android:color/holo_orange_dark"
+        android:textColor="@color/brand_primary"
         android:textSize="32sp"
         android:textStyle="bold"
         app:layout_constraintTop_toTopOf="parent"
@@ -36,7 +36,7 @@
         app:layout_constraintHorizontal_chainStyle="packed"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:tint="@android:color/holo_orange_dark" />
+        app:tint="@color/brand_primary" />
 
     <androidx.cardview.widget.CardView
         android:id="@+id/writePostCard"

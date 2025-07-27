@@ -4,4 +4,12 @@
     <color name="white">#FFFFFFFF</color>
     <color name="background">#e9eaf2</color>
     <color name="grey">#808080</color>
+
+    <color name="brand_primary">#1976D2</color>
+    <color name="brand_primary_variant">#0D47A1</color>
+    <color name="brand_secondary">#29B6F6</color>
+    <color name="brand_text_primary">#FFFFFF</color>
+    <color name="brand_background">#F8FAFC</color>
+    <color name="icon_inactive">#FFFFFF</color>
+
 </resources>

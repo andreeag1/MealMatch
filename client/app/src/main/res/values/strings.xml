@@ -33,4 +33,48 @@
     <string name="valid_password">Password must be at least 6 characters</string>
     <string name="username_required">Username cannot be empty</string>
 
+    <string-array name="cuisine_options">
+        <item>Any</item>
+        <item>Chinese</item>
+        <item>Japanese</item>
+        <item>Korean</item>
+        <item>Thai</item>
+        <item>Indian</item>
+        <item>Italian</item>
+        <item>French</item>
+        <item>Mexican</item>
+        <item>Middle Eastern</item>
+        <item>American</item>
+    </string-array>
+
+    <string-array name="dietary_options">
+        <item>None</item>
+        <item>Vegetarian</item>
+        <item>Vegan</item>
+        <item>Gluten-Free</item>
+        <item>Pescatarian</item>
+        <item>Halal</item>
+        <item>Kosher</item>
+        <item>Dairy-Free</item>
+        <item>Nut-Free</item>
+    </string-array>
+
+    <string-array name="ambiance_options">
+        <item>Any</item>
+        <item>Casual</item>
+        <item>Family-Friendly</item>
+        <item>Upscale</item>
+        <item>Outdoor Seating</item>
+        <item>Lively</item>
+        <item>Quiet</item>
+    </string-array>
+
+    <string-array name="budget_options">
+        <item>Any</item>
+        <item>$</item>
+        <item>$$</item>
+        <item>$$$</item>
+        <item>$$$$</item>
+    </string-array>
+
 </resources>
