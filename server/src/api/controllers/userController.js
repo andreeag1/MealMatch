@@ -18,11 +18,13 @@ export const getAllUsers = async (req, res) => {
 
 /**
  * @desc Get a single user by ID
- * @route GET /api/users/:id
+ * @route GET /api/users/me
  */
 export const getUserById = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
+    const user = await User.findById(req.user._id).select(
+      "_id username email"
+    );
     if (user) {
       return response(res, "User Found", 200, true, user);
     } else {

@@ -3,61 +3,159 @@ package com.mealmatch.ui.profile
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
+import androidx.fragment.app.viewModels
 import com.mealmatch.R
 import com.mealmatch.data.local.TokenManager
-import com.mealmatch.data.network.repository.ProfilePrefRepository
+import com.mealmatch.data.model.UserPreferences
 import com.mealmatch.databinding.FragmentProfileBinding
 import com.mealmatch.ui.auth.AuthActivity
-import com.mealmatch.data.model.UserPreferences
-import com.mealmatch.data.model.UserViewModel
-import kotlinx.coroutines.launch
-
-data class UserPreferences(
-    var username: String,
-    var email: String,
-    var cuisines: String? = null,
-    var dietary: String? = null,
-    var ambiance: String? = null,
-    var budget: String? = null,
-)
+import com.mealmatch.ui.friends.ApiResult
 
 class ProfileFragment : Fragment() {
 
     private var _binding: FragmentProfileBinding? = null
     private val binding get() = _binding!!
 
-    private val profilePrefRepository = ProfilePrefRepository()
-
-    private val userSettings = UserPreferences(
-        username = UserViewModel.username ?: "testUsername",
-        email = UserViewModel.email ?: "testemail@gmail.com"
-    )
+    private val viewModel: ProfileViewModel by viewModels()
+    private var currentPreferences: UserPreferences? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
         _binding = FragmentProfileBinding.inflate(inflater, container, false)
-
-        with(binding) {
-            btnLeaderboard.setOnClickListener { handleViewLeaderBoards() }
-            btnSettings.setOnClickListener { handleSettings() }
-            btnLogout.setOnClickListener { handleLogout() }
-            editPreferences.setOnClickListener { showEditPreferencesPopup() }
-        }
-
+        binding.btnLogout.setOnClickListener { handleLogout() }
+        binding.editPreferences.setOnClickListener { showEditPreferencesDialog() }
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        setProfileInfo()
-        fetchPreferences()
+        observeViewModel()
+        fetchData()
+    }
+
+    private fun fetchData() {
+        val token = TokenManager.getToken(requireContext())
+        if (token != null) {
+            val authToken = "Bearer $token"
+            viewModel.fetchUserProfile(authToken)
+            viewModel.fetchPreferences(authToken)
+        } else {
+            handleLogout()
+        }
+    }
+
+    @SuppressLint("SetTextI18n")
+    private fun observeViewModel() {
+        viewModel.userProfileResult.observe(viewLifecycleOwner) { result ->
+            when (result) {
+                is ApiResult.Loading -> {
+                    binding.userName.text = "Loading..."
+                    binding.userEmail.text = ""
+                }
+                is ApiResult.Success -> {
+                    binding.userName.text = result.data.username
+                    binding.userEmail.text = result.data.email
+                }
+                is ApiResult.Error -> {
+                    Toast.makeText(context, "Error fetching profile: ${result.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+
+        viewModel.preferencesResult.observe(viewLifecycleOwner) { result ->
+            when (result) {
+                is ApiResult.Loading -> {
+                    // Optionally handle loading state for preferences
+                }
+                is ApiResult.Success -> {
+                    currentPreferences = result.data
+                    updatePreferencesUI(result.data)
+                }
+                is ApiResult.Error -> {
+                    Toast.makeText(context, "Error fetching preferences: ${result.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+
+        viewModel.updatePreferencesResult.observe(viewLifecycleOwner) { result ->
+            when (result) {
+                is ApiResult.Loading -> {
+                    Toast.makeText(context, "Saving...", Toast.LENGTH_SHORT).show()
+                }
+                is ApiResult.Success -> {
+                    Toast.makeText(context, "Preferences saved successfully!", Toast.LENGTH_SHORT).show()
+                    // Re-fetch preferences to show the updated values
+                    val token = TokenManager.getToken(requireContext())
+                    if (token != null) viewModel.fetchPreferences("Bearer $token")
+                }
+                is ApiResult.Error -> {
+                    Toast.makeText(context, "Error saving preferences: ${result.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+
+    @SuppressLint("SetTextI18n")
+    private fun updatePreferencesUI(prefs: UserPreferences) {
+        binding.prefCuisines.text = "Cuisine: ${prefs.cuisine}"
+        binding.prefDietary.text = "Dietary: ${prefs.dietary}"
+        binding.prefAmbiance.text = "Ambiance: ${prefs.ambiance}"
+        binding.prefBudget.text = "Budget: ${prefs.budget}"
+    }
+
+    private fun showEditPreferencesDialog() {
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.edit_preferences_popup, null)
+
+        val inputCuisine = dialogView.findViewById<Spinner>(R.id.inputCuisine)
+        val inputDietary = dialogView.findViewById<Spinner>(R.id.inputDietary)
+        val inputAmbiance = dialogView.findViewById<Spinner>(R.id.inputAmbiance)
+        val inputBudget = dialogView.findViewById<Spinner>(R.id.inputBudget)
+
+        val cuisineOptions = resources.getStringArray(R.array.cuisine_options)
+        val dietaryOptions = resources.getStringArray(R.array.dietary_options)
+        val ambianceOptions = resources.getStringArray(R.array.ambiance_options)
+        val budgetOptions = resources.getStringArray(R.array.budget_options)
+
+        setupSpinner(inputCuisine, cuisineOptions, currentPreferences?.cuisine)
+        setupSpinner(inputDietary, dietaryOptions, currentPreferences?.dietary)
+        setupSpinner(inputAmbiance, ambianceOptions, currentPreferences?.ambiance)
+        setupSpinner(inputBudget, budgetOptions, currentPreferences?.budget)
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Edit Preferences")
+            .setView(dialogView)
+            .setPositiveButton("Save") { dialog, _ ->
+                val newPrefs = UserPreferences(
+                    cuisine = inputCuisine.selectedItem.toString(),
+                    dietary = inputDietary.selectedItem.toString(),
+                    ambiance = inputAmbiance.selectedItem.toString(),
+                    budget = inputBudget.selectedItem.toString()
+                )
+                val token = TokenManager.getToken(requireContext())
+                if (token != null) {
+                    viewModel.updatePreferences("Bearer $token", newPrefs)
+                }
+                dialog.dismiss()
+            }
+            .setNegativeButton("Cancel") { dialog, _ -> dialog.dismiss() }
+            .show()
+    }
+
+    private fun setupSpinner(spinner: Spinner, options: Array<String>, currentValue: String?) {
+        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, options)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinner.adapter = adapter
+        currentValue?.let {
+            val position = options.indexOf(it)
+            if (position >= 0) {
+                spinner.setSelection(position)
+            }
+        }
     }
 
     override fun onDestroyView() {
@@ -65,166 +163,8 @@ class ProfileFragment : Fragment() {
         _binding = null
     }
 
-    private fun setProfileInfo() {
-        binding.userName.text = userSettings.username
-        binding.userEmail.text = userSettings.email
-    }
-
-    @SuppressLint("SetTextI18n")
-    private fun handleEditPreferences(
-        cuisinePreferences: String,
-        dietaryPreferences: String,
-        ambiancePreferences: String,
-        budgetPreferences: String
-    ) {
-        userSettings.apply {
-            cuisines = cuisinePreferences
-            dietary = dietaryPreferences
-            ambiance = ambiancePreferences
-            budget = budgetPreferences
-        }
-
-        with(binding) {
-            prefCuisines.text = "Cuisine: ${userSettings.cuisines}"
-            prefDietary.text = "Dietary: ${userSettings.dietary}"
-            prefAmbiance.text = "Ambiance: ${userSettings.ambiance}"
-            prefBudget.text = "Budget: ${userSettings.budget}"
-        }
-    }
-
-    private fun showPreferencesDialog(
-        title: String,
-        onSave: (String, String, String, String) -> Unit
-    ) {
-        val dialogView = LayoutInflater.from(requireContext())
-            .inflate(R.layout.edit_preferences_popup, null)
-
-        val inputCuisine = dialogView.findViewById<Spinner>(R.id.inputCuisine)
-        val inputDietary = dialogView.findViewById<Spinner>(R.id.inputDietary)
-        val inputAmbiance = dialogView.findViewById<Spinner>(R.id.inputAmbiance)
-        val spinner = dialogView.findViewById<Spinner>(R.id.inputBudget)
-
-        val cuisineOptions = arrayOf("Select a cuisine", "Chinese", "Japanese", "Korean", "Thai", "Indian", "Italian", "French", "Mexican", "Middle Eastern", "American")
-        val dietaryOptions = arrayOf("Select a dietary preference", "Vegetarian", "Vegan", "Gluten-Free", "Pescatarian", "Halal", "Kosher", "Dairy-Free", "Nut-Free")
-        val ambianceOptions = arrayOf("Select an ambiance", "Casual", "Cozy", "Romantic", "Trendy", "Family-Friendly", "Upscale", "Outdoor Seating", "Lively", "Quiet")
-        val inputBudgetOptions = arrayOf("Select a budget", "$", "$$", "$$$", "$$$$")
-
-        fun setupSpinner(spinner: Spinner, options: Array<String>) {
-            val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, options)
-            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-            spinner.adapter = adapter
-            spinner.setSelection(0)
-        }
-
-        setupSpinner(inputCuisine, cuisineOptions)
-        setupSpinner(inputDietary, dietaryOptions)
-        setupSpinner(inputAmbiance, ambianceOptions)
-        setupSpinner(spinner, inputBudgetOptions)
-
-        AlertDialog.Builder(requireContext())
-            .setTitle(title)
-            .setView(dialogView)
-            .setPositiveButton("Save") { dialog, _ ->
-                val cuisine = inputCuisine.selectedItem.toString()
-                val dietary = inputDietary.selectedItem.toString()
-                val ambiance = inputAmbiance.selectedItem.toString()
-                val budget = spinner.selectedItem.toString()
-
-                // send to backend
-                sendPreferencesToBackend()
-
-                onSave(cuisine, dietary, ambiance, budget)
-                dialog.dismiss()
-            }
-            .setNegativeButton("Cancel") { dialog, _ -> dialog.dismiss() }
-            .show()
-    }
-
-    private fun showEditPreferencesPopup() {
-        showPreferencesDialog("Edit Preferences") { cuisine, dietary, ambiance, budget ->
-            handleEditPreferences(cuisine, dietary, ambiance, budget)
-            sendPreferencesToBackend()
-        }
-    }
-
-    private fun showInitialPreferencesDialog() {
-        showPreferencesDialog("Set Your Preferences") { cuisine, dietary, ambiance, budget ->
-            handleEditPreferences(cuisine, dietary, ambiance, budget)
-            sendPreferencesToBackend()
-        }
-    }
-
-    private fun sendPreferencesToBackend() {
-        val token = TokenManager.getToken(requireContext())
-        if (token == null) {
-            Log.e("ProfileFragment", "Failed to save profile due to empty token")
-            return
-        }
-
-        val authHeader = "Bearer $token"
-
-        val preferences = UserPreferences(
-            cuisine = userSettings.cuisines.orEmpty(),
-            dietary = userSettings.dietary.orEmpty(),
-            ambiance = userSettings.ambiance.orEmpty(),
-            budget = userSettings.budget.orEmpty()
-        )
-
-        lifecycleScope.launch {
-            try {
-                Log.i("ProfileFragment", "Sending preferences: $preferences")
-                profilePrefRepository.setProfilePref(authHeader, preferences)
-            } catch (e: Exception) {
-                Log.e("ProfileFragment", "Failed to save profile", e)
-            }
-        }
-    }
-
-    private fun fetchPreferences() {
-        val token = TokenManager.getToken(requireContext()) ?: run {
-            Log.e("ProfileFragment", "Empty token")
-            return
-        }
-
-        val authHeader = "Bearer $token"
-
-        lifecycleScope.launch {
-            try {
-                val response = profilePrefRepository.getProfilePref(authHeader) 
-                if (response.isSuccessful) {
-                    val prefs = response.body()?.data
-
-                    handleEditPreferences(
-                        prefs?.cuisine.orEmpty(),
-                        prefs?.dietary.orEmpty(),
-                        prefs?.ambiance.orEmpty(),
-                        prefs?.budget.orEmpty()
-                    )
-
-                    if (prefs?.run {
-                            cuisine.isEmpty() && dietary.isEmpty() &&
-                                    ambiance.isEmpty() && budget.isEmpty()
-                        } == true
-                    ) {
-                        showInitialPreferencesDialog()
-                    }
-
-                } else {
-                    Log.e("ProfileFragment", "Profile fetch unsuccessful: ${response.code()}")
-                }
-            } catch (e: Exception) {
-                Log.e("ProfileFragment", "Failed to fetch profile", e)
-            }
-        }
-    }
-
-    private fun handleViewLeaderBoards() {
-    }
-
-    private fun handleSettings() {
-    }
-
     private fun handleLogout() {
+        TokenManager.clearToken(requireContext()) // Clear the token on logout
         val intent = Intent(requireContext(), AuthActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }

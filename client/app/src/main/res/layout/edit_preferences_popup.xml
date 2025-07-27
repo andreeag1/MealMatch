@@ -1,37 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
 
-    <LinearLayout
-        android:orientation="vertical"
-        android:padding="24dp"
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Cuisine"
+        android:textStyle="bold" />
+
+    <Spinner
+        android:id="@+id/inputCuisine"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp" />
 
-        <Spinner
-            android:id="@+id/inputCuisine"
-            android:hint="Cuisine Preferences"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Dietary Preference"
+        android:textStyle="bold" />
 
-        <Spinner
-            android:id="@+id/inputDietary"
-            android:hint="Dietary Preferences"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+    <Spinner
+        android:id="@+id/inputDietary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp" />
 
-        <Spinner
-            android:id="@+id/inputAmbiance"
-            android:hint="Ambiance Preferences"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Ambiance"
+        android:textStyle="bold" />
 
-        <!-- Budget Preference Dropdown Menu -->
-        <Spinner
-            android:id="@+id/inputBudget"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:spinnerMode="dropdown" />
-    </LinearLayout>
-</ScrollView>
+    <Spinner
+        android:id="@+id/inputAmbiance"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Budget"
+        android:textStyle="bold" />
+
+    <Spinner
+        android:id="@+id/inputBudget"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+</LinearLayout>
