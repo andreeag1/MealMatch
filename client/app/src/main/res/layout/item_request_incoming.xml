@@ -2,7 +2,8 @@
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp">
+    android:layout_marginHorizontal="8dp"
+    android:layout_marginVertical="4dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -20,10 +21,17 @@
             android:textAppearance="?attr/textAppearanceBodyLarge" />
 
         <Button
-            android:id="@+id/cancelButton"
-            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:id="@+id/declineButton"
+            style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Cancel" />
+            android:text="Decline" />
+
+        <Button
+            android:id="@+id/acceptButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Accept" />
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

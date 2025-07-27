@@ -12,11 +12,6 @@ class FriendRepository {
         return api.getFriends(token)
     }
 
-    // define response for both of these
-    suspend fun addFriend(token: String, username: String): Response<ApiResponse<Unit>> {
-        return api.addFriend(token, mapOf("friendUsername" to username))
-    }
-
     suspend fun removeFriend(token: String, username: String): Response<ApiResponse<Unit>> {
         return api.removeFriend(token, mapOf("friendUsername" to username))
 

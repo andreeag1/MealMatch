@@ -5,7 +5,7 @@ import response  from "../helpers/response.js";
 export const sendFriendRequest = async (req, res) => {
     try {
         const { username: recipientUsername } = req.body;
-        const senderId = req.user._id; // Using req.user._id to match your example
+        const senderId = req.user._id;
 
         const recipient = await User.findOne({ username: recipientUsername });
         if (!recipient) {
@@ -38,7 +38,7 @@ export const sendFriendRequest = async (req, res) => {
 
 export const getFriendRequests = async (req, res) => {
     try {
-        const { type } = req.query; // 'incoming' or 'outgoing'
+        const { type } = req.query;
         const currentUserId = req.user._id;
 
         let query = {};
@@ -54,7 +54,7 @@ export const getFriendRequests = async (req, res) => {
             .populate('fromUser', 'username email')
             .populate('toUser', 'username email');
 
-        return response(res, "Requests fetched successfully", 200, true, { data: requests });
+        return response(res, "Requests fetched successfully", 200, true, requests);
 
     } catch (error) {
         return response(res, "Internal server error", 500, false, { error: error.message });

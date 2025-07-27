@@ -23,28 +23,28 @@ interface FriendApiService {
     @POST("api/friends/remove")
     suspend fun removeFriend(
         @Header("Authorization") token: String,
-        @Body body: Map<String, String>  // {"friendUsername": "lama"}
+        @Body body: Map<String, String>
     ): Response<ApiResponse<Unit>>
 
-    @POST("friend-requests")
+    @POST("api/friend-requests")
     suspend fun sendFriendRequest(
         @Header("Authorization") token: String,
         @Body body: Map<String, String>
     ): Response<Unit>
 
-    @GET("friend-requests")
+    @GET("api/friend-requests")
     suspend fun getFriendRequests(
         @Header("Authorization") token: String,
         @Query("type") type: String
     ): Response<FriendRequestsResponse>
 
-    @POST("friend-requests/accept")
+    @POST("api/friend-requests/accept")
     suspend fun acceptFriendRequest(
         @Header("Authorization") token: String,
         @Body body: Map<String, String>
     ): Response<Unit>
 
-    @POST("friend-requests/decline")
+    @POST("api/friend-requests/decline")
     suspend fun declineFriendRequest(
         @Header("Authorization") token: String,
         @Body body: Map<String, String>

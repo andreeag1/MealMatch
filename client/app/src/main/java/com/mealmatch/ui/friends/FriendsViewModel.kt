@@ -21,8 +21,6 @@ sealed class ApiResult<out T> {
     object Loading : ApiResult<Nothing>()
 }
 
-//data class Friend(val id: String, val username: String, val email: String = "")
-
 class FriendsViewModel : ViewModel() {
     private val groupRepository = GroupRepository()
     private val friendRepo = FriendRepository()
@@ -97,21 +95,6 @@ class FriendsViewModel : ViewModel() {
         }
     }
 
-//    fun addFriend(token: String, username: String) {
-//        viewModelScope.launch {
-//            try {
-//                val res = friendRepo.addFriend(token, username)
-//                if (res.isSuccessful) fetchFriends(token)
-//                else {
-//                    val errorMsg = res.errorBody()?.string() ?: "Failed to add friend"
-//                    Log.e("AddFriend", errorMsg)
-//                }
-//            } catch (e: Exception) {
-//                Log.e("AddFriend", "Error", e)
-//            }
-//        }
-//    }
-
     fun sendFriendRequest(token: String, username: String) {
         viewModelScope.launch {
             try {
@@ -145,7 +128,6 @@ class FriendsViewModel : ViewModel() {
 
     fun getFriendRequests(token: String) {
         viewModelScope.launch {
-            // Fetch incoming
             _incomingRequests.value = ApiResult.Loading
             try {
                 val res = friendRepo.getFriendRequests(token, "incoming")
@@ -158,7 +140,6 @@ class FriendsViewModel : ViewModel() {
                 _incomingRequests.value = ApiResult.Error(e.message ?: "Network error")
             }
 
-            // Fetch outgoing
             _outgoingRequests.value = ApiResult.Loading
             try {
                 val res = friendRepo.getFriendRequests(token, "outgoing")
@@ -177,7 +158,6 @@ class FriendsViewModel : ViewModel() {
         viewModelScope.launch {
             val res = friendRepo.acceptFriendRequest(token, requestId)
             if (res.isSuccessful) {
-                // Refresh both friends and requests lists
                 fetchFriends(token)
                 getFriendRequests(token)
             }
@@ -188,7 +168,6 @@ class FriendsViewModel : ViewModel() {
         viewModelScope.launch {
             val res = friendRepo.declineFriendRequest(token, requestId)
             if (res.isSuccessful) {
-                // Refresh requests lists
                 getFriendRequests(token)
             }
         }

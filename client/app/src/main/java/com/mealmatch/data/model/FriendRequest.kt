@@ -4,7 +4,7 @@ data class FriendRequest(
     val _id: String,
     val fromUser: FriendModel,
     val toUser: FriendModel,
-    val status: String // "pending", "accepted", "declined"
+    val status: String
 )
 
 data class FriendRequestsResponse(
