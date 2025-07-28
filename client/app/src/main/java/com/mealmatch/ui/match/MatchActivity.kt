@@ -85,7 +85,7 @@ class MatchActivity : AppCompatActivity() {
         if (usedLocation != null) {
             val token = TokenManager.getToken(this)
             if (token != null) {
-                viewModel.fetchUserPreferences(token)
+                viewModel.fetchUserPreferences("Bearer $token")
             } else {
                 viewModel.fetchNearbyRestaurants(usedLocation)
             }
