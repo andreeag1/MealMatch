@@ -14,7 +14,8 @@ import androidx.recyclerview.widget.GridLayoutManager
 class PostAdapter(
     private val postList: List<Post>,
     private val currentUsername: String,
-    private val onDeleteClick: (Post) -> Unit
+    private val onDeleteClick: (Post) -> Unit,
+    private val onEditClick: (Post) -> Unit
 ) : RecyclerView.Adapter<PostAdapter.PostViewHolder>() {
 
     class PostViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -23,6 +24,7 @@ class PostAdapter(
         val ratingBar: RatingBar = view.findViewById(R.id.rating_bar)
         val postMediaRecyclerView: RecyclerView = view.findViewById(R.id.postMediaRecyclerView)
         val deleteButton: ImageButton = view.findViewById(R.id.button_delete)
+        val editButton: ImageButton = view.findViewById(R.id.button_edit)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PostViewHolder {
@@ -57,11 +59,16 @@ class PostAdapter(
 
         if (post.user?.username == currentUsername) {
             holder.deleteButton.visibility = View.VISIBLE
+            holder.editButton.visibility = View.VISIBLE
             holder.deleteButton.setOnClickListener {
                 onDeleteClick(post)
             }
+            holder.editButton.setOnClickListener { 
+                onEditClick(post) 
+            }
         } else {
             holder.deleteButton.visibility = View.GONE
+            holder.editButton.visibility = View.GONE
         }
     }
 

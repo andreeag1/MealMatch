@@ -62,6 +62,8 @@ class HomeFragment : Fragment() {
     private val friendRepository = com.mealmatch.data.network.repository.FriendRepository()
     private val friendsList = mutableListOf<String>()
 
+    private var editingPost: Post? = null
+
     private val getContent = registerForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
         if (!uris.isNullOrEmpty()) {
             uploadMultipleMediaFiles(uris)
@@ -91,9 +93,10 @@ class HomeFragment : Fragment() {
         val prefs = requireContext().getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
         currentUsername = prefs.getString("username", null) ?: ""
 
-        postAdapter = PostAdapter(posts, currentUsername) { post ->
-            deletePost(post)
-        }
+        postAdapter = PostAdapter(posts, currentUsername,
+            { post -> deletePost(post) },
+            { post -> enterEditMode(post) }
+        )
         postRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         postRecyclerView.adapter = postAdapter
 
@@ -119,7 +122,12 @@ class HomeFragment : Fragment() {
             else {
                 postErrorText.visibility = View.GONE
                 currentErrorType = null
-                createPost(caption)
+
+                if (editingPost != null) {
+                    updatePost(editingPost!!, caption, rating, selectedMedia.toList())
+                } else {
+                    createPost(caption)
+                }
             }
         }
 
@@ -154,7 +162,23 @@ class HomeFragment : Fragment() {
         clearButton.setOnClickListener {
             captionInput.text.clear()
             ratingBar.rating = 0f
+            resetEditMode()
             postErrorText.visibility = View.GONE
+
+            val mediaToDelete = selectedMedia.toList()
+            selectedMedia.clear()
+            mediaAdapter.notifyDataSetChanged()
+            updateMediaRecyclerViewVisibility()
+
+            for (media in mediaToDelete) {
+                FirebaseMediaManager.deleteMedia(
+                    storagePath = media.storagePath,
+                    onSuccess = {},
+                    onFailure = { exception ->
+                        showToast("Error deleting media: ${exception.message}")
+                    }
+                )
+            }
         }
 
         mediaAdapter = MediaAdapter(
@@ -270,6 +294,54 @@ class HomeFragment : Fragment() {
                 showToast("Error: ${e.message}")
             }
         }
+    }
+
+    private fun enterEditMode(post: Post) {
+        editingPost = post
+        captionInput.setText(post.caption)
+        ratingBar.rating = post.rating
+        selectedMedia.clear()
+        selectedMedia.addAll(post.media)
+        mediaAdapter.notifyDataSetChanged()
+        updateMediaRecyclerViewVisibility()
+        writePostCard.visibility = View.VISIBLE
+        toggleWritePostButton.text = "Hide Review"
+        isWritePostVisible = true
+        postButton.text = "Save Changes"
+    }
+
+    private fun updatePost(post: Post, caption: String, rating: Float, media: List<Media>) {
+        scope.launch {
+            try {
+                val updatedPost = post.copy(
+                    caption = caption,
+                    rating = rating,
+                    media = media
+                )
+                val response = api.updatePost("Bearer ${getToken()}", post._id!!, updatedPost)
+                if (response.isSuccessful && response.body()?.success == true) {
+                    withContext(Dispatchers.Main) {
+                        showToast("Post updated")
+                        resetEditMode()
+                        loadPosts()
+                    }
+                } else {
+                    showToast("Failed to update post")
+                }
+            } catch (e: Exception) {
+                showToast("Error: ${e.message}")
+            }
+        }
+    }
+
+    private fun resetEditMode() {
+        editingPost = null
+        postButton.text = "Create Post"
+        captionInput.text.clear()
+        ratingBar.rating = 0f
+        selectedMedia.clear()
+        mediaAdapter.notifyDataSetChanged()
+        updateMediaRecyclerViewVisibility()
     }
 
     private fun deletePost(post: Post) {
