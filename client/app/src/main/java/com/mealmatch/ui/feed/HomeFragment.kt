@@ -368,8 +368,9 @@ class HomeFragment : Fragment() {
                 val response = api.deletePost("Bearer ${getToken()}", post._id!!)
                 if (response.isSuccessful && response.body()?.success == true) {
                     withContext(Dispatchers.Main) {
-                        posts.remove(post)
-                        postAdapter.notifyDataSetChanged()
+                        allPosts.removeAll { it._id == post._id }
+                        posts.removeAll { it._id == post._id }
+                        applyFilter()
                         showToast("Post deleted")
                     }
                 } else {
