@@ -16,4 +16,7 @@ interface PostApiService {
     @DELETE("api/posts/{id}")
     suspend fun deletePost(@Header("Authorization") token: String, @Path("id") postId: String): Response<ApiResponse<Unit>>
 
+    @PUT("api/posts/{id}")
+    suspend fun updatePost(@Header("Authorization") token: String, @Path("id") postId: String, @Body updatedPost: Post): Response<ApiResponse<Post>>
+
 }

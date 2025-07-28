@@ -84,3 +84,38 @@ export const deletePost = async (req, res) => {
     });
   }
 };
+
+/**
+ * @desc Update a post by ID
+ * @route PUT /api/posts/:id
+ */
+export const updatePost = async (req, res) => {
+  try {
+    const postId = req.params.id;
+    const userId = req.user._id;
+    const { caption, rating, media } = req.body;
+
+    const post = await Post.findById(postId);
+
+    if (!post) {
+      return response(res, "Post not found", 404, false);
+    }
+
+    if (post.user.toString() !== userId.toString()) {
+      return response(res, "Unauthorized: You can only edit your own posts", 403, false);
+    }
+
+    if (caption !== undefined) post.caption = caption;
+    if (rating !== undefined) post.rating = rating;
+    if (media !== undefined) post.media = media;
+
+    const updatedPost = await post.save();
+    const populatedPost = await updatedPost.populate("user", "username");
+
+    return response(res, "Post updated successfully", 200, true, populatedPost);
+  } catch (error) {
+    return response(res, "Internal server error", 500, false, {
+      error: error.message,
+    });
+  }
+};
