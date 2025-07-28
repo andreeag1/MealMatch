@@ -42,7 +42,7 @@
             android:id="@+id/userName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Test User"
+            android:text=""
             android:textSize="18sp"
             android:textStyle="bold"
             android:layout_marginTop="8dp" />
@@ -51,7 +51,7 @@
             android:id="@+id/userEmail"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="testuser@example.com"
+            android:text=""
             android:textSize="14sp"
             android:textColor="#888888" />
 
@@ -76,25 +76,25 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="• Cuisines: Italian, Japanese, Mexican" />
+                android:text="• Cuisines:" />
 
             <TextView
                 android:id="@+id/prefDietary"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="• Dietary: Vegetarian-friendly, Gluten-free options" />
+                android:text="• Dietary:" />
 
             <TextView
                 android:id="@+id/prefAmbiance"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="• Ambiance: Casual, Trendy" />
+                android:text="• Ambiance:" />
 
             <TextView
                 android:id="@+id/prefBudget"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="• Budget: $$" />
+                android:text="• Budget:" />
 
             <Button
                 android:id="@+id/editPreferences"
@@ -107,15 +107,6 @@
         </LinearLayout>
 
         <!-- Buttons -->
-        <Button
-            android:id="@+id/btnSettings"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:backgroundTint="#9E9E9E"
-            android:text="⚙️ App Settings"
-            android:textColor="#FFFFFF"
-            android:layout_marginTop="12dp" />
-
         <Button
             android:id="@+id/btnLogout"
             android:layout_width="match_parent"
