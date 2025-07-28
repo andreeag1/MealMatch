@@ -11,5 +11,6 @@
     <color name="brand_text_primary">#FFFFFF</color>
     <color name="brand_background">#F8FAFC</color>
     <color name="icon_inactive">#FFFFFF</color>
+    <color name="quantum_grey800">#424242</color>
 
 </resources>

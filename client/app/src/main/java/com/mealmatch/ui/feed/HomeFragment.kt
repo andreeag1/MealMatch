@@ -20,6 +20,7 @@ import android.text.Editable
 import androidx.appcompat.app.AlertDialog
 import android.net.Uri
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.GridLayoutManager
 import com.mealmatch.data.model.Media
 import com.mealmatch.data.network.FirebaseMediaManager
@@ -35,6 +36,18 @@ class HomeFragment : Fragment() {
     private lateinit var postAdapter: PostAdapter
     private lateinit var currentUsername: String
     private val posts = mutableListOf<Post>()
+    private val allPosts = mutableListOf<Post>()
+
+    private enum class FilterType { ALL, FRIENDS, ME }
+    private var currentFilter = FilterType.ALL
+
+    private lateinit var filterAllButton: Button
+    private lateinit var filterFriendsButton: Button
+    private lateinit var filterMeButton: Button
+
+    private lateinit var toggleWritePostButton: Button
+    private lateinit var writePostCard: androidx.cardview.widget.CardView
+    private var isWritePostVisible = false
 
     private lateinit var mediaRecyclerView: RecyclerView
     private lateinit var buttonAddMedia: Button
@@ -45,6 +58,9 @@ class HomeFragment : Fragment() {
     private val job = Job()
     private val scope = CoroutineScope(Dispatchers.IO + job)
     private var currentErrorType: String? = null
+
+    private val friendRepository = com.mealmatch.data.network.repository.FriendRepository()
+    private val friendsList = mutableListOf<String>()
 
     private val getContent = registerForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
         if (!uris.isNullOrEmpty()) {
@@ -66,6 +82,11 @@ class HomeFragment : Fragment() {
         clearButton = view.findViewById(R.id.clearButton)
         mediaRecyclerView = view.findViewById(R.id.mediaRecyclerView)
         buttonAddMedia = view.findViewById(R.id.mediaButton)
+        filterAllButton = view.findViewById(R.id.filterAllButton)
+        filterFriendsButton = view.findViewById(R.id.filterFriendsButton)
+        filterMeButton = view.findViewById(R.id.filterMeButton)
+        toggleWritePostButton = view.findViewById(R.id.toggleWritePostButton)
+        writePostCard = view.findViewById(R.id.writePostCard)
 
         val prefs = requireContext().getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
         currentUsername = prefs.getString("username", null) ?: ""
@@ -153,8 +174,38 @@ class HomeFragment : Fragment() {
             getContent.launch("*/*")
         }
 
+        filterAllButton.setOnClickListener {
+            currentFilter = FilterType.ALL
+            updateFilterButtonColors()
+            applyFilter()
+        }
+
+        filterFriendsButton.setOnClickListener {
+            currentFilter = FilterType.FRIENDS
+            updateFilterButtonColors()
+            applyFilter()
+        }
+
+        filterMeButton.setOnClickListener {
+            currentFilter = FilterType.ME
+            updateFilterButtonColors()
+            applyFilter()
+        }
+
+        toggleWritePostButton.setOnClickListener {
+            toggleWritePostSection()
+        }
+
         loadPosts()
+        loadFriends()
+        resetFilter()
         return view
+    }
+
+    private fun resetFilter() {
+        currentFilter = FilterType.ALL
+        updateFilterButtonColors()
+        applyFilter()
     }
 
     private fun getToken(): String {
@@ -176,9 +227,9 @@ class HomeFragment : Fragment() {
                 if (response.isSuccessful && response.body()?.success == true) {
                     val fetchedPosts = response.body()?.data ?: emptyList()
                     withContext(Dispatchers.Main) {
-                        posts.clear()
-                        posts.addAll(fetchedPosts)
-                        postAdapter.notifyDataSetChanged()
+                        allPosts.clear()
+                        allPosts.addAll(fetchedPosts)
+                        applyFilter()
                     }
                 } else {
                     showToast("Failed to load posts")
@@ -309,6 +360,64 @@ class HomeFragment : Fragment() {
             mediaRecyclerView.visibility = View.VISIBLE
         } else {
             mediaRecyclerView.visibility = View.GONE
+        }
+    }
+
+    private fun updateFilterButtonColors() {
+        val activeColor = ContextCompat.getColor(requireContext(), R.color.brand_primary)
+        val inactiveColor = ContextCompat.getColor(requireContext(), R.color.quantum_grey800)
+        
+        filterAllButton.setBackgroundColor(
+            if (currentFilter == FilterType.ALL) activeColor else inactiveColor
+        )
+        filterFriendsButton.setBackgroundColor(
+            if (currentFilter == FilterType.FRIENDS) activeColor else inactiveColor
+        )
+        filterMeButton.setBackgroundColor(
+            if (currentFilter == FilterType.ME) activeColor else inactiveColor
+        )
+    }
+
+    private fun applyFilter() {
+        val filteredPosts = when (currentFilter) {
+            FilterType.ALL -> allPosts
+            FilterType.FRIENDS -> allPosts.filter { post -> 
+                post.user?.username in friendsList 
+            }
+            FilterType.ME -> allPosts.filter { it.user?.username == currentUsername }
+        }
+        
+        posts.clear()
+        posts.addAll(filteredPosts)
+        postAdapter.notifyDataSetChanged()
+    }
+
+    private fun loadFriends() {
+        scope.launch {
+            try {
+                val response = friendRepository.getFriends("Bearer ${getToken()}")
+                if (response.isSuccessful && response.body()?.friends != null) {
+                    withContext(Dispatchers.Main) {
+                        friendsList.clear()
+                        friendsList.addAll(response.body()!!.friends.map { it.username })
+                        applyFilter()
+                    }
+                }
+            } catch (e: Exception) {
+                showToast("Error loading friends: ${e.message}")
+            }
+        }
+    }
+
+    private fun toggleWritePostSection() {
+        if (isWritePostVisible) {
+            writePostCard.visibility = View.GONE
+            toggleWritePostButton.text = "Write a Review!"
+            isWritePostVisible = false
+        } else {
+            writePostCard.visibility = View.VISIBLE
+            toggleWritePostButton.text = "Hide"
+            isWritePostVisible = true
         }
     }
 
