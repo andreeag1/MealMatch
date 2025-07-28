@@ -39,7 +39,8 @@ class PostAdapter(
 
         if (post.media.isNotEmpty()) {
             holder.postMediaRecyclerView.visibility = View.VISIBLE
-            val spanCount = if (post.media.size == 1) 1 else 3
+
+            val spanCount = 3
             val mediaAdapter = MediaAdapter(
                 post.media.toMutableList(),
                 {},
