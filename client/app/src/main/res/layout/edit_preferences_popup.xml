@@ -35,15 +35,6 @@
         android:text="Ambiance"
         android:textStyle="bold" />
 
-<<<<<<< HEAD
-        <Spinner
-            android:id="@+id/inputBudget"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:spinnerMode="dropdown" />
-    </LinearLayout>
-</ScrollView>
-=======
     <Spinner
         android:id="@+id/inputAmbiance"
         android:layout_width="match_parent"
@@ -62,4 +53,3 @@
         android:layout_height="wrap_content" />
 
 </LinearLayout>
->>>>>>> main
