@@ -42,7 +42,6 @@
                 android:text="Manage Friends"
                 app:icon="@drawable/ic_person" />
 
-            <!-- This TextView will act as our notification badge -->
             <TextView
                 android:id="@+id/friendRequestBadge"
                 android:layout_width="20dp"

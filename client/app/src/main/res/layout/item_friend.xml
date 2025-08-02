@@ -1,10 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  This layout defines the appearance of a single row in the "Add Friends" RecyclerView.
-  It includes an ImageView for the friend's avatar, a TextView for their name,
-  and another ImageView for the checkmark icon that appears when selected.
-  A simple ConstraintLayout is used to align these elements horizontally.
--->
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"

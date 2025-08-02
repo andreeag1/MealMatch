@@ -2,6 +2,7 @@ import User from '../models/userModel.js';
 import FriendRequest from '../models/FriendRequest.js';
 import response  from "../helpers/response.js";
 
+
 export const sendFriendRequest = async (req, res) => {
     try {
         const { username: recipientUsername } = req.body;
@@ -61,6 +62,7 @@ export const getFriendRequests = async (req, res) => {
     }
 };
 
+
 export const acceptFriendRequest = async (req, res) => {
     try {
         const { requestId } = req.body;
@@ -83,6 +85,7 @@ export const acceptFriendRequest = async (req, res) => {
         return response(res, "Internal server error", 500, false, { error: error.message });
     }
 };
+
 
 export const declineOrCancelRequest = async (req, res) => {
     try {
