@@ -2,6 +2,18 @@
     <!-- Base application theme. -->
     <style name="Base.Theme.MealMatch" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
+        <!-- Primary brand color. This will be used for things like the Toolbar. -->
+        <item name="colorPrimary">@color/brand_primary</item>
+        <item name="colorPrimaryVariant">@color/brand_primary_variant</item>
+        <item name="colorOnPrimary">@color/brand_text_primary</item>
+
+        <!-- Secondary brand color. This will be used for things like Floating Action Buttons. -->
+        <item name="colorSecondary">@color/brand_secondary</item>
+        <item name="colorSecondaryVariant">@color/brand_secondary</item>
+        <item name="colorOnSecondary">@color/brand_text_primary</item>
+
+        <!-- Status bar color. -->
+        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
     </style>
 
@@ -10,6 +22,17 @@
     <style name="Theme.MealMatch.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="Widget.MealMatch.BottomNavigationView" parent="Widget.Material3.BottomNavigationView">
+        <item name="itemIconTint">@color/bottom_nav_item_color</item>
+        <item name="itemTextColor">@color/bottom_nav_item_color</item>
+        <item name="android:background">@color/brand_primary</item>
+        <item name="itemActiveIndicatorStyle">@style/Widget.MealMatch.BottomNavigationView.ActiveIndicator</item>
+    </style>
+
+    <style name="Widget.MealMatch.BottomNavigationView.ActiveIndicator" parent="">
+        <item name="android:color">@android:color/transparent</item>
     </style>
 
 </resources>

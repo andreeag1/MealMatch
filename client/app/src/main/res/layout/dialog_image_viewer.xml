@@ -2,16 +2,16 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="@color/brand_background">
 
-    <androidx.media3.ui.PlayerView
-        android:id="@+id/playerView"
+    <ImageView
+        android:id="@+id/fullScreenImageView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:scaleType="fitCenter" />
 
     <ImageButton
-        android:id="@+id/closeButton"
+        android:id="@+id/closeImageViewerButton"
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:layout_alignParentTop="true"

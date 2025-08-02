@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Color for the selected (checked) state -->
+    <item android:color="@color/brand_secondary" android:state_checked="true" />
+    <!-- Default color for the unselected (unchecked) state -->
+    <item android:color="@color/icon_inactive" />
+</selector>

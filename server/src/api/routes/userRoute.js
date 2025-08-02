@@ -5,11 +5,12 @@ import {
   updateUser,
   deleteUser,
 } from "../controllers/userController.js";
+import authMiddleware from "../middlewares/authMiddleware.js";
 
 const router = Router();
 
 router.get("/", getAllUsers);
-router.get("/:id", getUserById);
+router.get("/me", authMiddleware, getUserById);
 router.put("/:id", updateUser);
 router.delete("/:id", deleteUser);
 

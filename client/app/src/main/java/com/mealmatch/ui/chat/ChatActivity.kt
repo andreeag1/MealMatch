@@ -112,11 +112,6 @@ class ChatActivity : AppCompatActivity() {
             }
         }
 
-        binding.buttonLeaderboard.setOnClickListener {
-            // TODO: Handle leaderboard click
-            Toast.makeText(this, "Leaderboard clicked", Toast.LENGTH_SHORT).show()
-        }
-
         binding.buttonViewActiveSessions.setOnClickListener {
             viewModel.activeSessionsResult.value?.let { result ->
                 if (result is ApiResult.Success) {

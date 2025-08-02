@@ -15,4 +15,6 @@ class ProfilePrefRepository {
     suspend fun getProfilePref(token: String): Response<ApiResponse<UserPreferences>> {
         return profilePrefApiService.getProfilePref(token)
     }
+
+    suspend fun getMyProfile(token: String) = profilePrefApiService.getMyProfile(token)
 }
